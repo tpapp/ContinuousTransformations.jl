@@ -9,7 +9,9 @@ export
     invert,
     UnivariateTransformation,
     LowerUpperBound,
+    UNIT_INTERVAL,
     LowerBound,
+    POSITIVE_REALS,
     UpperBound
 
 ######################################################################
@@ -65,6 +67,8 @@ transform_logjac(lu::LowerUpperBound, x::Real) =
 
 invert(lu::LowerUpperBound, y) = logit((y-lu.lower)/width(lu))
 
+const UNIT_INTERVAL = LowerUpperBound(0.0,1.0)
+
 """
 Transform ℝ to the interval (lower,∞), using an exponential transformation.
 """
@@ -85,6 +89,8 @@ transform(l::LowerBound, x::Real) = exp(x)+l.lower
 transform_logjac(l::LowerBound, x::Real) = (transform(l, x), x)
 
 invert(l::LowerBound, y::Real) = log(y-l.lower)
+
+const POSITIVE_REALS = LowerBound(0.0)
 
 """
 Transform ℝ to the interval (-∞, upper), using an exponential transformation.
