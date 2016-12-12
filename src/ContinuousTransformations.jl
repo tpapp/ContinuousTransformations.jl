@@ -70,7 +70,13 @@ Transform ℝ to the interval (lower,∞), using an exponential transformation.
 """
 immutable LowerBound{T} <: UnivariateTransformation
     lower::T
+    function LowerBound(lower)
+        isfinite(lower) || error(ArgumentError("Bound needs to be finite."))
+        new(lower)
+    end
 end
+
+LowerBound{T}(lower::T) = LowerBound{T}(lower)
 
 in(x::Real, l::LowerBound) = l.lower ≤ x
 
@@ -85,7 +91,13 @@ Transform ℝ to the interval (-∞, upper), using an exponential transformation
 """
 immutable UpperBound{T} <: UnivariateTransformation
     upper::T
+    function UpperBound(upper)
+        isfinite(upper) || error(ArgumentError("Bound needs to be finite."))
+        new(upper)
+    end
 end
+
+UpperBound{T}(upper::T) = UpperBound{T}(upper)
 
 in(x::Real, u::UpperBound) = x ≤ u.upper
 
