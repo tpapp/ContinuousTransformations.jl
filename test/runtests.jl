@@ -31,7 +31,7 @@ end
 @testset "LowerBound" begin
     for i in 1:1000
         test_transform(LowerBound(randn()), randn())
-        test_transform(POSITIVE_REALS, randn())
+        test_transform(POSITIVE_REAL, randn())
     end
 end
 

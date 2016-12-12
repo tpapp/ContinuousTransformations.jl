@@ -11,7 +11,7 @@ export
     LowerUpperBound,
     UNIT_INTERVAL,
     LowerBound,
-    POSITIVE_REALS,
+    POSITIVE_REAL,
     UpperBound
 
 ######################################################################
@@ -90,7 +90,7 @@ transform_logjac(l::LowerBound, x::Real) = (transform(l, x), x)
 
 invert(l::LowerBound, y::Real) = log(y-l.lower)
 
-const POSITIVE_REALS = LowerBound(0.0)
+const POSITIVE_REAL = LowerBound(0.0)
 
 """
 Transform ℝ to the interval (-∞, upper), using an exponential transformation.
