@@ -1,116 +1,206 @@
 module ContinuousTransformations
 
 using StatsFuns
-import Base: in
+using ValidatedNumerics
+using Parameters
+import Base: inv
 
 export
-    transform,
-    transform_logjac,
-    invert,
+    # general
+    LOGJAC,
+    JAC,
     UnivariateTransformation,
-    LowerUpperBound,
-    UNIT_INTERVAL,
-    LowerBound,
-    POSITIVE_REAL,
-    UpperBound
-
+    domain,
+    # univariate transformations
+    Logistic,
+    Logit,
+    Exp,
+    Log,
+    OddsRatio,
+    InvOddsRatio,
+    Affine,
+    Power
+    
 ######################################################################
-# utilities
+# general interface
 ######################################################################
 
-"""
-Transform a value (in ℝ or ℝⁿ).
-"""
-function transform end
+immutable LogJac end
 
-"""
-Transform a value (in ℝ or ℝⁿ), and return a tuple of the result and the 
-log of the determinant of the Jacobian.
-"""
-function transform_logjac end
+const LOGJAC = LogJac()
 
-"""
-Invert a transformation. `invert(c, transform(c, x)) == x` should hold.
-"""
-function invert end
+immutable Jac end
+
+const JAC = Jac()
+
+𝕀(T) = zero(T)..one(T)
+
+ℝ(T) = T(-Inf)..T(Inf)
+
+ℝ⁺(T) = zero(T)..T(Inf)
 
 abstract UnivariateTransformation
 
 """
-Transform ℝ to the finite interval (lower,upper), using the logistic function.
+Return the domain of the transformation as an interval, with the given
+type (defaults to Float64).
 """
-immutable LowerUpperBound{T} <: UnivariateTransformation
-    lower::T
-    upper::T
-    function LowerUpperBound(lower, upper)
-        (isfinite(lower) && isfinite(upper)) ||
-            error(ArgumentError("Bounds need to be finite."))
-        lower < upper ||
-            error(ArgumentError("Bounds need to be in the right order"))
-        new(lower, upper)
+domain(f::UnivariateTransformation) = domain(Float64, f)
+
+######################################################################
+# logistic
+######################################################################
+
+"""
+Transform ℝ to (0,1) using the logistic function.
+"""
+immutable Logistic <: UnivariateTransformation end
+
+domain{T <: Real}(::Type{T}, ::Logistic) = ℝ(T)
+
+(::Logistic)(x) = logistic(x)
+
+(::Logistic)(x, ::Jac) = (ℓ = logistic(x); (ℓ, exp(-x)*ℓ^2))
+
+(::Logistic)(x, ::LogJac) = logistic(x), -x-2*log1pexp(-x)
+
+inv(::Logistic) = Logit()
+
+######################################################################
+# logit
+######################################################################
+
+"""
+Transfrom (0,1) to ℝ using the logit function.
+"""
+immutable Logit <: UnivariateTransformation end
+
+domain{T <: Real}(::Type{T}, ::Logit) = 𝕀(T)
+
+(::Logit)(x) = logit(x)
+
+(::Logit)(x, ::Jac) = logit(x), 1/(x*(1-x))
+
+(::Logit)(x, ::LogJac) = logit(x), -(log(x)+(log(1-x)))
+ 
+inv(::Logit) = Logistic()
+
+######################################################################
+# odds ratio and its inverse
+######################################################################
+
+"""
+Maps ``(0,1)`` to ``(0, ∞)`` using ``y = x/(1-x)``.
+"""
+immutable OddsRatio <: UnivariateTransformation end
+
+domain{T <: Real}(::Type{T}, ::OddsRatio) = 𝕀(T)
+
+(::OddsRatio)(x) = x/(1-x)
+
+(::OddsRatio)(x, ::Jac) = x/(1-x), (1-x)^(-2)
+
+(::OddsRatio)(x, ::LogJac) = x/(1-x), -2*log(1-x)
+
+inv(::OddsRatio) = InvOddsRatio()
+
+"""
+Maps ``(0,∞)`` to ``(0, 1)`` using ``y = x/(1+x)``.
+"""
+immutable InvOddsRatio <: UnivariateTransformation end
+
+domain{T <: Real}(::Type{T}, ::InvOddsRatio) = ℝ⁺(T)
+
+(::InvOddsRatio)(x) = x/(1+x)
+
+(::InvOddsRatio)(x, ::Jac) = x/(1+x), (1+x)^(-2)
+
+(::InvOddsRatio)(x, ::LogJac) = x/(1+x), -2*log1p(x)
+
+inv(::InvOddsRatio) = OddsRatio()
+
+######################################################################
+# exponential and log
+######################################################################
+
+"""
+Transform ℝ to the interval (0,∞), using the exponential function.
+"""
+immutable Exp <: UnivariateTransformation end
+
+domain{T <: Real}(::Type{T}, ::Exp) = ℝ(T)
+
+(::Exp)(x) = exp(x)
+
+(::Exp)(x, ::Jac) = (ϵ = exp(x); (ϵ,ϵ))
+
+(::Exp)(x, ::LogJac) = exp(x), x
+
+inv(::Exp) = Log()
+
+"""
+Transform (0,∞) to ℝ  using the logarithm function.
+"""
+immutable Log <: UnivariateTransformation end
+
+domain{T <: Real}(::Type{T}, ::Log) = ℝ⁺(T)
+
+(::Log)(x) = log(x)
+
+(::Log)(x, ::Jac) = log(x), 1/x
+
+(::Log)(x, ::LogJac) = (ℓ=log(x); (ℓ, -ℓ))
+
+inv(::Log) = Exp()
+
+######################################################################
+# affine transformation
+######################################################################
+
+"""
+Transform ℝ to itself using ``y = α⋅x + β``.
+"""
+immutable Affine{T <: Real} <: UnivariateTransformation
+    α::T
+    β::T
+end
+
+domain{T <: Real}(::Type{T}, ::Affine) = ℝ(T)
+
+(a::Affine)(x) = muladd(x, a.α, a.β)
+
+(a::Affine)(x, ::Jac) = a(x), abs(a.α)
+
+(a::Affine)(x, ::LogJac) = a(x), log(abs(a.α))
+
+function inv{T}(a::Affine{T})
+    @unpack α, β = a
+    @assert α ≠ 0
+    Affine(one(T)/α, -β/α)
+end
+
+######################################################################
+# power transformation
+######################################################################
+
+immutable Power{T <: Real} <: UnivariateTransformation
+    γ::T
+    function Power(γ)
+        @assert γ > zero(γ)
+        new(γ)
     end
 end
 
-width(lu::LowerUpperBound) = lu.upper-lu.lower
+Power{T}(γ::T) = Power{T}(γ)
 
-LowerUpperBound{T <: Real}(lower::T, upper::T) = LowerUpperBound{T}(lower, upper)
+domain{T}(::Type{T}, ::Power) = ℝ⁺(T)
 
-LowerUpperBound(lower::Real, upper::Real) =
-    LowerUpperBound(promote(lower, upper)...)
+(p::Power)(x) = (@assert x ≥ 0; x^p.γ)
 
-in(x::Real, lu::LowerUpperBound) = lu.lower ≤ x ≤ lu.upper
+(p::Power)(x, ::Jac) = p(x), p.γ*x^(p.γ-1)
 
-transform(lu::LowerUpperBound, x::Real) = lu.lower+logistic(x)*width(lu)
+(p::Power)(x, ::LogJac) = p(x), log(p.γ)+(p.γ-1)*log(x)
 
-transform_logjac(lu::LowerUpperBound, x::Real) =
-    (transform(lu, x), -2*log1pexp(-x)-x+log(width(lu)))
-
-invert(lu::LowerUpperBound, y) = logit((y-lu.lower)/width(lu))
-
-const UNIT_INTERVAL = LowerUpperBound(0.0,1.0)
-
-"""
-Transform ℝ to the interval (lower,∞), using an exponential transformation.
-"""
-immutable LowerBound{T} <: UnivariateTransformation
-    lower::T
-    function LowerBound(lower)
-        isfinite(lower) || error(ArgumentError("Bound needs to be finite."))
-        new(lower)
-    end
-end
-
-LowerBound{T}(lower::T) = LowerBound{T}(lower)
-
-in(x::Real, l::LowerBound) = l.lower ≤ x
-
-transform(l::LowerBound, x::Real) = exp(x)+l.lower
-
-transform_logjac(l::LowerBound, x::Real) = (transform(l, x), x)
-
-invert(l::LowerBound, y::Real) = log(y-l.lower)
-
-const POSITIVE_REAL = LowerBound(0.0)
-
-"""
-Transform ℝ to the interval (-∞, upper), using an exponential transformation.
-"""
-immutable UpperBound{T} <: UnivariateTransformation
-    upper::T
-    function UpperBound(upper)
-        isfinite(upper) || error(ArgumentError("Bound needs to be finite."))
-        new(upper)
-    end
-end
-
-UpperBound{T}(upper::T) = UpperBound{T}(upper)
-
-in(x::Real, u::UpperBound) = x ≤ u.upper
-
-transform(u::UpperBound, x::Real) = u.upper-exp(x)
-
-transform_logjac(u::UpperBound, x::Real) = (transform(u, x), x)
-
-invert(u::UpperBound, y::Real) = log(u.upper-y)
+inv(p::Power) = Power(1/p.γ)
 
 end # module
