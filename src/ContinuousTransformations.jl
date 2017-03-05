@@ -11,6 +11,7 @@ export
     JAC,
     UnivariateTransformation,
     domain,
+    integral_substitution,
     # univariate transformations
     Logistic,
     Logit,
@@ -45,7 +46,30 @@ abstract UnivariateTransformation
 Return the domain of the transformation as an interval, with the given
 type (defaults to Float64).
 """
-domain(f::UnivariateTransformation) = domain(Float64, f)
+domain(t::UnivariateTransformation) = domain(Float64, t)
+
+"""
+Transform an integrand and a domain for integration using `t` as the
+substitution. Return the transformed function and the domain.
+
+Example:
+
+```julia
+f, D = integral_substitution(InvOddsRatio(), x->exp(-x^2), 0..Inf)
+```
+
+will return values such that
+``
+\int_D f(x) dx = \int_0^\infty exp(-x^2) dx = √π/2
+``
+"""
+function integral_substitution(t, f, domain)
+    t⁻ = inv(t)
+    function(y)
+        x, jac = t⁻(y, JAC)
+        f(x)*jac
+    end, t(domain)
+end
 
 ######################################################################
 # logistic
@@ -96,9 +120,9 @@ immutable OddsRatio <: UnivariateTransformation end
 
 domain{T <: Real}(::Type{T}, ::OddsRatio) = 𝕀(T)
 
-(::OddsRatio)(x) = x/(1-x)
+(::OddsRatio)(x) = x/(one(x)-x)
 
-(::OddsRatio)(x, ::Jac) = x/(1-x), (1-x)^(-2)
+(::OddsRatio)(x, ::Jac) = x/(one(x)-x), one(x)/((one(x)-x)^2)
 
 (::OddsRatio)(x, ::LogJac) = x/(1-x), -2*log(1-x)
 
@@ -111,7 +135,10 @@ immutable InvOddsRatio <: UnivariateTransformation end
 
 domain{T <: Real}(::Type{T}, ::InvOddsRatio) = ℝ⁺(T)
 
-(::InvOddsRatio)(x) = x/(1+x)
+(::InvOddsRatio)(x) = x == Inf ? one(x) : x/(1+x)
+
+(::InvOddsRatio)(x::Interval) = Interval(InvOddsRatio()(x.lo),
+                                         InvOddsRatio()(x.hi))
 
 (::InvOddsRatio)(x, ::Jac) = x/(1+x), (1+x)^(-2)
 

@@ -2,6 +2,7 @@ using ContinuousTransformations
 using ValidatedNumerics
 using Base.Test
 import ForwardDiff: derivative
+using Cubature
 
 """
 Test univariate transformation `f` with `x`. Tests for:
@@ -54,4 +55,9 @@ end
 
 @testset "UpperBound" begin
     for i in 1:1000 test_univariate(Affine(randn(), randn()), randn()) end
+end
+
+@testset "Integral" begin
+    f, dom = integral_substitution(InvOddsRatio(), x->exp(-x^2), 0..Inf)
+    @test hquadrature(f, dom.lo, dom.hi)[1] ≈ √π/2
 end
