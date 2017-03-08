@@ -4,6 +4,7 @@ using StatsFuns
 using ValidatedNumerics
 using Parameters
 import Base: inv
+using ArgCheck
 
 export
     # general
@@ -21,7 +22,7 @@ export
     InvOddsRatio,
     Affine,
     Power
-    
+
 ######################################################################
 # general interface
 ######################################################################
@@ -36,9 +37,13 @@ const JAC = Jac()
 
 𝕀(T) = zero(T)..one(T)
 
+in𝕀(x) = zero(x) ≤ x ≤ one(x)
+
 ℝ(T) = T(-Inf)..T(Inf)
 
 ℝ⁺(T) = zero(T)..T(Inf)
+
+inℝ⁺(x) = zero(x) ≤ x
 
 abstract UnivariateTransformation
 
@@ -71,22 +76,46 @@ function integral_substitution(t, f, domain)
     end, t(domain)
 end
 
+"""
+Apply a monotone transformation to an interval by endpoints, using
+correct rounding (depending, of course, on `f` respecting rounding
+mode).
+"""
+@inline function map_interval_monotone{T}(f, x::Interval{T}, increasing::Bool = true)
+    f_rounded(x, mode) = setrounding(()->f(x), T, mode)
+    if increasing
+        Interval(f_rounded(x.lo, RoundDown), f_rounded(x.hi, RoundUp))
+    else
+        Interval(f_rounded(x.hi, RoundDown), f_rounded(x.lo, RoundUp))
+    end
+end
+
+"""
+Given a monotone increasing function `f` that operates on scalars,
+define a mode for intervals.
+"""
+macro lift_monotone_increasing(T)
+    quote
+        (f::$T)(x::Interval) = map_interval_monotone(f, x)
+    end
+end
+
 ######################################################################
 # logistic
 ######################################################################
 
-"""
-Transform ℝ to (0,1) using the logistic function.
-"""
+"Transform ℝ to (0,1) using the logistic function."
 immutable Logistic <: UnivariateTransformation end
 
 domain{T <: Real}(::Type{T}, ::Logistic) = ℝ(T)
 
 (::Logistic)(x) = logistic(x)
 
-(::Logistic)(x, ::Jac) = (ℓ = logistic(x); (ℓ, exp(-x)*ℓ^2))
+@lift_monotone_increasing Logistic
 
-(::Logistic)(x, ::LogJac) = logistic(x), -x-2*log1pexp(-x)
+(f::Logistic)(x, ::Jac) = (ℓ = f(x); (ℓ, exp(-x)*ℓ^2))
+
+(f::Logistic)(x, ::LogJac) = f(x), -x-2*log1pexp(-x)
 
 inv(::Logistic) = Logit()
 
@@ -101,12 +130,17 @@ immutable Logit <: UnivariateTransformation end
 
 domain{T <: Real}(::Type{T}, ::Logit) = 𝕀(T)
 
-(::Logit)(x) = logit(x)
+function (::Logit)(x)
+    @argcheck in𝕀(x) DomainError()
+    logit(x)
+end
 
-(::Logit)(x, ::Jac) = logit(x), 1/(x*(1-x))
+@lift_monotone_increasing Logit
 
-(::Logit)(x, ::LogJac) = logit(x), -(log(x)+(log(1-x)))
- 
+(f::Logit)(x, ::Jac) = f(x), 1/(x*(1-x))
+
+(f::Logit)(x, ::LogJac) = f(x), -(log(x)+(log(1-x)))
+
 inv(::Logit) = Logistic()
 
 ######################################################################
@@ -120,11 +154,16 @@ immutable OddsRatio <: UnivariateTransformation end
 
 domain{T <: Real}(::Type{T}, ::OddsRatio) = 𝕀(T)
 
-(::OddsRatio)(x) = x/(one(x)-x)
+function (::OddsRatio)(x)
+    @argcheck in𝕀(x) DomainError()
+    x/(one(x)-x)
+end
 
-(::OddsRatio)(x, ::Jac) = x/(one(x)-x), one(x)/((one(x)-x)^2)
+@lift_monotone_increasing OddsRatio
 
-(::OddsRatio)(x, ::LogJac) = x/(1-x), -2*log(1-x)
+(f::OddsRatio)(x, ::Jac) = f(x), one(x)/((one(x)-x)^2)
+
+(f::OddsRatio)(x, ::LogJac) = f(x), -2*log(1-x)
 
 inv(::OddsRatio) = InvOddsRatio()
 
@@ -135,14 +174,16 @@ immutable InvOddsRatio <: UnivariateTransformation end
 
 domain{T <: Real}(::Type{T}, ::InvOddsRatio) = ℝ⁺(T)
 
-(::InvOddsRatio)(x) = x == Inf ? one(x) : x/(1+x)
+function (::InvOddsRatio)(x)
+    @argcheck inℝ⁺(x) DomainError()
+    x == Inf ? one(x) : x/(1+x)
+end
 
-(::InvOddsRatio)(x::Interval) = Interval(InvOddsRatio()(x.lo),
-                                         InvOddsRatio()(x.hi))
+@lift_monotone_increasing InvOddsRatio
 
-(::InvOddsRatio)(x, ::Jac) = x/(1+x), (1+x)^(-2)
+(f::InvOddsRatio)(x, ::Jac) = f(x), (1+x)^(-2)
 
-(::InvOddsRatio)(x, ::LogJac) = x/(1+x), -2*log1p(x)
+(f::InvOddsRatio)(x, ::LogJac) = f(x), -2*log1p(x)
 
 inv(::InvOddsRatio) = OddsRatio()
 
@@ -150,9 +191,7 @@ inv(::InvOddsRatio) = OddsRatio()
 # exponential and log
 ######################################################################
 
-"""
-Transform ℝ to the interval (0,∞), using the exponential function.
-"""
+"Transform ℝ to the interval (0,∞), using the exponential function."
 immutable Exp <: UnivariateTransformation end
 
 domain{T <: Real}(::Type{T}, ::Exp) = ℝ(T)
@@ -190,11 +229,21 @@ Transform ℝ to itself using ``y = α⋅x + β``.
 immutable Affine{T <: Real} <: UnivariateTransformation
     α::T
     β::T
+    function Affine(α, β)
+        @argcheck α ≠ zero(T) DomainError()
+        new(α, β)
+    end
 end
+
+Affine{T}(α::T, β::T) = Affine{T}(α, β)
+
+Affine(α, β) = Affine(promote(α, β)...)
 
 domain{T <: Real}(::Type{T}, ::Affine) = ℝ(T)
 
-(a::Affine)(x) = muladd(x, a.α, a.β)
+(a::Affine)(x) = fma(x, a.α, a.β)
+
+(a::Affine)(x::Interval) = map_interval_monotone(a, x, a.α > 0)
 
 (a::Affine)(x, ::Jac) = a(x), abs(a.α)
 
@@ -202,8 +251,20 @@ domain{T <: Real}(::Type{T}, ::Affine) = ℝ(T)
 
 function inv{T}(a::Affine{T})
     @unpack α, β = a
-    @assert α ≠ 0
     Affine(one(T)/α, -β/α)
+end
+
+"""
+Return an Affine map that maps the first interval to the second.
+"""
+function Affine(i1::Interval, i2::Interval)
+    @argcheck isfinite(i1) && isfinite(i2) "infinite interval(s)"
+    d1 = diam(i1)
+    d2 = diam(i2)
+    @argcheck d1 > 0 && d2 > 0 "empty interval(s)"
+    α = d2 / d1
+    β = i2.lo - i1.li * α
+    Affine(α, β)
 end
 
 ######################################################################
@@ -222,7 +283,12 @@ Power{T}(γ::T) = Power{T}(γ)
 
 domain{T}(::Type{T}, ::Power) = ℝ⁺(T)
 
-(p::Power)(x) = (@assert x ≥ 0; x^p.γ)
+function (p::Power)(x)
+    @argcheck inℝ⁺(x) DomainError()
+    x^p.γ
+end
+
+@lift_monotone_increasing Power
 
 (p::Power)(x, ::Jac) = p(x), p.γ*x^(p.γ-1)
 
