@@ -30,11 +30,7 @@ Test that univariate transformations map an interval the correct way.
 """
 function test_univariate_interval(f::UnivariateTransformation, x::Interval)
     y = f(x)
-    f_lo, f_hi = f(x.lo), f(x.hi)
-    if f_lo > f_hi
-        f_lo, f_hi = f_hi, f_lo
-    end
-    y2 = f_lo..f_hi             # constructor handles rounding
+    y2 = (isa(f, Affine) && f.α < 0) ? f(x.hi)..f(x.lo) : f(x.lo)..f(x.hi)
     @test y.lo ≈ y2.lo
     @test y.hi ≈ y2.hi
 end
