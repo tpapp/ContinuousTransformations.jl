@@ -1,8 +1,8 @@
 using ContinuousTransformations
-using ValidatedNumerics
-using Base.Test
 import ForwardDiff: derivative
 using Cubature
+import Base: rand
+using Base.Test
 
 """
 Test univariate transformation `f` with `x`. Tests for:
@@ -14,8 +14,7 @@ Test univariate transformation `f` with `x`. Tests for:
 """
 function test_univariate_scalar(f::UnivariateTransformation, x)
     y = f(x)
-    @test isa(y, typeof(x))
-    @test y ∈ f(domain(f))
+    @test y ∈ image(f)
     @test inv(f)(y) ≈ x
     (y2, jac) = f(x, JAC)
     @test y == y2
@@ -26,54 +25,45 @@ function test_univariate_scalar(f::UnivariateTransformation, x)
 end
 
 """
-Test that univariate transformations map an interval the correct way.
+Test that univariate transformations map a Segment the correct way.
 """
-function test_univariate_interval(f::UnivariateTransformation, x::Interval)
+function test_univariate_interval(f::UnivariateTransformation, x::Segment)
     y = f(x)
-    y2 = (isa(f, Affine) && f.α < 0) ? f(x.hi)..f(x.lo) : f(x.lo)..f(x.hi)
-    @test y.lo ≈ y2.lo
-    @test y.hi ≈ y2.hi
+    left, right = f(x.left), f(x.right)
+    if right < left
+        right, left = left, right
+    end
+    @test y.left ≈ left
+    @test y.right ≈ right
 end
 
-"Return a random float in an interval (for testing)."
-function random_scalar_in_interval(i::Interval)
-    if isentire(i)
-        randn()
-    elseif i.hi == Inf
-        i.lo + abs(randn())
-    elseif i.lo == -Inf
-        i.hi - abs(randn())
-    else
-        i.lo + diam(i)*rand()
-    end
-end
+# Return a random float in an interval (for testing).
+rand(::RealLine) = randn()
+rand(ray::PositiveRay) = ray.left + abs(randn())
+rand(ray::NegativeRay) = ray.right + abs(randn())
+rand(seg::Segment) = seg.left + width(seg) * rand()
 
 """
 Return a function that generates random intervals in the given
 interval (for testing).
 """
-function random_interval_in_interval(i::Interval)
-    a, b = [random_scalar_in_interval(i) for _ in 1:2]
+function random_segment(i::AbstractInterval)
+    a, b = [rand(i) for _ in 1:2]
     if a > b
         a, b = b, a
     end
-    Interval(a, b)
+    Segment(a, b)
 end
 
 """
 Return a vector of values outside the interval (for testing).
 """
-function scalars_outside_interval(i::Interval)
-    xs = [0.1, 1.0, 2.0, Inf]
-    if isentire(i)
-        []
-    elseif i.hi == Inf
-        i.lo - xs
-    elseif i.lo == -Inf
-        i.hi + xs
-    else
-        vcat(i.lo - xs, i.hi + xs)
-    end
+scalars_outside_interval(::RealLine) = []
+scalars_outside_interval(ray::PositiveRay) = ray.left - [0.1, 1.0, 2.0, Inf]
+scalars_outside_interval(ray::NegativeRay) = ray.right + [0.1, 1.0, 2.0, Inf]
+function scalars_outside_interval(seg::Segment)
+    vcat(scalars_outside_interval(PositiveRay(seg.left)),
+         scalars_outside_interval(NegativeRay(seg.right)))
 end
 
 """
@@ -84,10 +74,10 @@ domain.
 function test_univariate(f, N=500)
     dom = domain(f)
     for i in 1:500
-        test_univariate_scalar(f, random_scalar_in_interval(dom))
+        test_univariate_scalar(f, rand(dom))
     end
     for i in 1:500
-        test_univariate_interval(f, random_interval_in_interval(dom))
+        test_univariate_interval(f, random_segment(dom))
     end
     for x in scalars_outside_interval(dom)
         @test_throws DomainError f(x)
@@ -112,5 +102,5 @@ end
 
 @testset "Univariate integral" begin
     f, dom = integral_substitution(InvOddsRatio(), x->exp(-x^2), 0..Inf)
-    @test hquadrature(f, dom.lo, dom.hi)[1] ≈ √π/2
+    @test hquadrature(f, dom.left, dom.right)[1] ≈ √π/2
 end
