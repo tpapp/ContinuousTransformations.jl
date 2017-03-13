@@ -344,11 +344,11 @@ For some cases, `mapping` can be omitted, and a default will be used.
 """
 function bridge(dom::AbstractInterval, mapping, img::AbstractInterval)
     m_dom, m_img = domain(mapping), image(mapping)
-    bridge(dom, m_dom) ∘ mapping ∘ bridge(m_img, img)
+    bridge(m_img, img) ∘ mapping ∘ bridge(dom, m_dom)
 end
 
 function bridge{Tdom,Timg}(dom::Tdom, img::Timg)
-    ArgumentError("Can't bridge a $(Tdom) to a $(Timg) without a transformation.")
+    throw(ArgumentError("Can't bridge a $(Tdom) to a $(Timg) without a transformation."))
 end
 
 bridge(dom::Segment, img::Segment) = Affine(dom, img)
