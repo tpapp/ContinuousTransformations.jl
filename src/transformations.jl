@@ -63,8 +63,7 @@ Convenience macro that defines methods for univariate transformation
 where parameter are not needed for the calculation.
 
 The first argument is of the form `T(x)`, provides the type and the
-variable which contains the argument for mappings. `mapping` is
-accessible for forms using `\$f` below.
+variable which contains the argument for mappings.
 
 See examples for usage.
 """
@@ -72,7 +71,7 @@ macro univariate_transformation_definitions(Tx, keys_and_values)
     @capture Tx T_(x_)
     dict = block_key_value_dict(keys_and_values)
     forms = []
-    f = esc(:mapping)
+    f = esc(:f)
     maybe_form!(key, f) = haskey(dict, key) && push!(forms, f(dict[key]))
     maybe_form!(:domain, e -> :($(esc(:domain))(::$T) = $(e)))
     maybe_form!(:image, e -> :($(esc(:image))(::$T) = $(e)))
@@ -84,9 +83,9 @@ macro univariate_transformation_definitions(Tx, keys_and_values)
           end
           end)
     maybe_form!(:isincreasing, e -> :($(esc(:isincreasing))($x::$T) = $(e)))
-    maybe_form!(:jac, e -> :(($f::$T)($x, ::Jac) = ($f(x), $(e))))
+    maybe_form!(:jac, e -> :(($f::$T)($x, ::Jac) = ($f($x), $(e))))
     maybe_form!(:mapping_and_jac, e -> :(($f::$T)($x, ::Jac) = $(e)))
-    maybe_form!(:logjac, e -> :(($f::$T)($x, ::LogJac) = ($f(x), $(e))))
+    maybe_form!(:logjac, e -> :(($f::$T)($x, ::LogJac) = ($f($x), $(e))))
     maybe_form!(:mapping_and_logjac, e -> :(($f::$T)($x, ::LogJac) = $(e)))
     quote $(forms...) end
 end
@@ -133,7 +132,7 @@ immutable Logistic <: UnivariateTransformation end
     image = 𝕀
     mapping = one(x) / (one(x) + exp(-x))
     isincreasing = true
-    mapping_and_jac = (ℓ = mapping(x); (ℓ, exp(-x) * ℓ^2))
+    mapping_and_jac = (ℓ = Logistic()(x); (ℓ, exp(-x) * ℓ^2))
     logjac = -x-2*log1pexp(-x)
     inv = Logit()
 end
