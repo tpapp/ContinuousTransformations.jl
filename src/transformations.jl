@@ -64,7 +64,7 @@ where parameter are not needed for the calculation.
 
 The first argument is of the form `T(x)`, provides the type and the
 variable which contains the argument for mappings. `mapping` is
-accessible for forms using `$f` below.
+accessible for forms using `\$f` below.
 
 See examples for usage.
 """
