@@ -133,7 +133,7 @@ intersect(a::RealLine, b::AbstractInterval) = b
 @inline function _maybe_segment(a, b)
     # NOTE Decided not to represent the empty interval, as it has no use in
     # the context of this package. Best to throw an error as soon as possible.
-    a < b ? Segment(a, b) : error("$(a) and $(b) have no intersection")
+    a < b ? Segment(a, b) : error("intersection of intervals is empty")
 end
 
 intersect(a::Segment, b::Segment) =
