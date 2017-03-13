@@ -297,6 +297,12 @@ end
 
 (c::ComposedTransformation)(x) = c.f(c.g(x))
 
+function show(io::IO, c::ComposedTransformation)
+    show(io, c.f)
+    println(io, " ∘ ")
+    show(io, c.g)
+end
+
 function (c::ComposedTransformation)(x, ::Jac)
     y, g′x = c.g(x, JAC)
     fy, f′y = c.f(y, JAC)
