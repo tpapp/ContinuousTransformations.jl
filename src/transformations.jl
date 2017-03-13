@@ -303,12 +303,21 @@ function (c::ComposedTransformation)(x, ::LogJac)
     fy, log_f′y + log_g′x
 end
 
-function domain(t::ComposedTransformation)
-    # need x ∈ domain(g) and also g(x) ∈ domain(f) <=> x ∈ inv(g)(domain(f))
-    inv(t.g)(domain(t.f)) ∩ domain(g)
+function domain(c::ComposedTransformation)
+    # f(g(x)) is valid iff x ∈ domain(g) and g(x) ∈ domain(f)
+    # the latter is equivalent to inv(g)(domain(f) ∩ domain(inv(g)))
+    @unpack f, g = c
+    invg = inv(g)
+    domain(g) ∩ invg(domain(f) ∩ domain(invg))
 end
 
-range(t::ComposedTransformation) = t(domain(t))
+function image(c::ComposedTransformation)
+    # y ∈ image(c) iff ∃ x: f(g(x)) = y and x ∈ domain(g), g(x) ∈ domain(f)
+    @unpack f, g = c
+    f(image(g) ∩ domain(f))
+end
+
+inv(c::ComposedTransformation) = ComposedTransformation(inv(c.g), inv(c.f))
 
 function ∘(f::UnivariateTransformation, g::UnivariateTransformation)
     ComposedTransformation(f, g)
