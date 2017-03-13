@@ -216,7 +216,7 @@ end
 """
 Transform ℝ to itself using ``y = α⋅x + β``.
 """
-immutable Affine{T <: Real} <: UnivariateTransformation
+@auto_hash_equals immutable Affine{T <: Real} <: UnivariateTransformation
     α::T
     β::T
     function Affine(α, β)
@@ -257,7 +257,7 @@ function Affine(i1::Segment, i2::Segment)
 end
 
 "Transform ℝ⁺ to itself using `y = x^γ`."
-immutable Power{T <: Real} <: UnivariateTransformation
+@auto_hash_equals immutable Power{T <: Real} <: UnivariateTransformation
     γ::T
     function Power(γ)
         @assert γ > zero(γ)
