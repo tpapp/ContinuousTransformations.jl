@@ -5,6 +5,7 @@ using AutoHashEquals
 using MacroTools
 using Parameters
 using StatsFuns
+using Compat
 
 include("utilities.jl")
 include("intervals.jl")

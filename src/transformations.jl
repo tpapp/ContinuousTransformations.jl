@@ -13,9 +13,13 @@ export
     OddsRatio,
     InvOddsRatio,
     Affine,
-    Power
+    Power,
+    # composition
+    bridge
 
 import Base: inv
+
+import Compat: ∘                # replace with Base in 0.6
 
 immutable LogJac end
 
@@ -273,3 +277,59 @@ end
 (p::Power)(x, ::LogJac) = p(x), log(p.γ)+(p.γ-1)*log(x)
 
 inv(p::Power) = Power(1/p.γ)
+
+"""
+Compose two univariate transformations. Use the `∘` operator for
+construction.
+"""
+immutable ComposedTransformation{Tf <: UnivariateTransformation,
+                                 Tg <: UnivariateTransformation} <:
+                                     UnivariateTransformation
+    f::Tf
+    g::Tg
+end
+
+(c::ComposedTransformation)(x) = c.f(c.g(x))
+
+function (c::ComposedTransformation)(x, ::Jac)
+    y, g′x = c.g(x, JAC)
+    fy, f′y = c.f(y, JAC)
+    fy, f′y * g′x
+end
+
+function (c::ComposedTransformation)(x, ::LogJac)
+    y, log_g′x = c.g(x, LOGJAC)
+    fy, log_f′y = c.f(y, LOGJAC)
+    fy, log_f′y + log_g′x
+end
+
+function domain(t::ComposedTransformation)
+    # need x ∈ domain(g) and also g(x) ∈ domain(f) <=> x ∈ inv(g)(domain(f))
+    inv(t.g)(domain(t.f)) ∩ domain(g)
+end
+
+range(t::ComposedTransformation) = t(domain(t))
+
+function ∘(f::UnivariateTransformation, g::UnivariateTransformation)
+    ComposedTransformation(f, g)
+end
+
+∘(f::Affine, g::Affine) = Affine(f.α*g.α, fma(f.α, g.β, f.β))
+
+"""
+Return a transformation that would map `dom` to `img`, via `mapping`.
+
+For some cases, `mapping` can be omitted, and a default will be used.
+"""
+function bridge(dom::AbstractInterval, mapping, img::AbstractInterval)
+    m_dom, m_img = domain(mapping), image(mapping)
+    bridge(dom, m_dom) ∘ mapping ∘ bridge(m_img, img)
+end
+
+function bridge{Tdom,Timg}(dom::Tdom, img::Timg)
+    ArgumentError("Can't bridge a $(Tdom) to a $(Timg) without a transformation.")
+end
+
+bridge(dom::Segment, img::Segment) = Affine(dom, img)
+
+bridge(dom::PositiveRay, img::PositiveRay) = Affine(1, img.left - dom.left)

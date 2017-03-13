@@ -8,7 +8,7 @@ export
 
 abstract AbstractInterval
 
-import Base: in, show, middle, linspace
+import Base: in, show, middle, linspace, intersect
 
 "The real line [-∞,∞]."
 immutable RealLine <: AbstractInterval
@@ -118,3 +118,35 @@ function monotone_map_interval(f, x::AbstractInterval, increasing)
     right = isa(x, Union{Segment, NegativeRay}) ? x.right : Inf
     increasing ? Interval(f(left), f(right)) : Interval(f(right), f(left))
 end
+
+######################################################################
+# intersections
+######################################################################
+
+## general fallback method. define specific methods with the following
+## argument ordering Segment < PositiveRay < NegativeRay < RealLine < all
+intersect(a::AbstractInterval, b::AbstractInterval) = intersect(b, a)
+    
+intersect(a::RealLine, b::AbstractInterval) = b
+
+"Helper function for forming a segment when possible."
+@inline function _maybe_segment(a, b)
+    # NOTE Decided not to represent the empty interval, as it has no use in
+    # the context of this package. Best to throw an error as soon as possible.
+    a < b ? Segment(a, b) : error("$(a) and $(b) have no intersection")
+end
+
+intersect(a::Segment, b::Segment) =
+    _maybe_segment(max(a.left, b.left), min(a.right, b.right))
+
+intersect(a::Segment, b::PositiveRay) =
+    _maybe_segment(max(b.left, a.left), a.right)
+
+intersect(a::Segment, b::NegativeRay) =
+    _maybe_segment(a.left, min(a.right, b.right))
+
+intersect(a::PositiveRay, b::PositiveRay) = PositiveRay(max(a.left, b.left))
+
+intersect(a::PositiveRay, b::NegativeRay) = _maybe_segment(a.left, b.right)
+
+intersect(a::NegativeRay, b::NegativeRay) = NegativeRay(min(a.right, b.right))
