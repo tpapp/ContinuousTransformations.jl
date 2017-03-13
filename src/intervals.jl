@@ -6,21 +6,25 @@ export
     Segment, 𝕀, width,
     Interval, ..
 
+import Base: in, show, middle, linspace, intersect, extrema
+
 abstract AbstractInterval
 
-import Base: in, show, middle, linspace, intersect
+function show(io::IO, x::AbstractInterval)
+    println(io, "[$(left)..$(right)]", extrema(x)...)
+end
 
 "The real line [-∞,∞]."
 immutable RealLine <: AbstractInterval
 end 
-
-show(io::IO, ::RealLine) = print("-∞..∞")
 
 const ℝ = RealLine()
 
 const ∞ = Inf
 
 in(x::Real, ::RealLine) = true
+
+extrema(::RealLine) = -∞, ∞
 
 """
 The interval [left,∞).
@@ -33,13 +37,13 @@ The interval [left,∞).
     end
 end
 
-show(io::IO, ray::PositiveRay) = println("$(ray.left)..∞")
-
 PositiveRay{T}(left::T) = PositiveRay{T}(left)
 
 const ℝ⁺ = PositiveRay(0.0)
 
 in(x::Real, ray::PositiveRay) = ray.left ≤ x
+
+extrema(ray::PositiveRay) = ray.left, ∞
 
 """
 The interval (-∞,right).
@@ -52,13 +56,13 @@ The interval (-∞,right).
     end
 end
 
-show(io::IO, ray::NegativeRay) = println("-∞..$(ray.right)")
-
 NegativeRay{T}(right::T) = NegativeRay{T}(right)
 
 const ℝ⁻ = NegativeRay(0.0)
 
 in(x::Real, ray::NegativeRay) = x ≤ ray.right
+
+extrema(ray::NegativeRay) = -∞, ray.right
 
 """
 The interval [a,b], with a < b enforced.
@@ -73,13 +77,13 @@ The interval [a,b], with a < b enforced.
     end
 end
 
-show(io::IO, s::Segment) = println("$(s.left)..$(s.right)")
-
 Segment{T <: Real}(left::T, right::T) = Segment{T}(left, right)
 
 Segment(left::Real, right::Real) = Segment(promote(left, right)...)
 
 in(x::Real, s::Segment) = s.left ≤ x ≤ s.right
+
+extrema(s::Segment) = s.left, s.right
 
 width(s::Segment) = s.right - s.left
 

@@ -342,10 +342,20 @@ Return a transformation that would map `dom` to `img`, via `mapping`.
 
 For some cases, `mapping` can be omitted, and a default will be used.
 """
-function bridge(dom::AbstractInterval, mapping, img::AbstractInterval)
+function bridge(dom::AbstractInterval, mapping::UnivariateTransformation,
+                img::AbstractInterval)
     m_dom, m_img = domain(mapping), image(mapping)
     bridge(m_img, img) ∘ mapping ∘ bridge(dom, m_dom)
 end
+
+function bridge(mapping::UnivariateTransformation, img::AbstractInterval)
+    bridge(image(mapping), img) ∘ mapping
+end
+
+function bridge(dom::AbstractInterval, mapping::UnivariateTransformation)
+    mapping ∘ bridge(dom, domain(mapping))
+end
+
 
 function bridge{Tdom,Timg}(dom::Tdom, img::Timg)
     throw(ArgumentError("Can't bridge a $(Tdom) to a $(Timg) without a transformation."))
@@ -353,4 +363,23 @@ end
 
 bridge(dom::Segment, img::Segment) = Affine(dom, img)
 
-bridge(dom::PositiveRay, img::PositiveRay) = Affine(1, img.left - dom.left)
+bridge(dom::PositiveRay, img::PositiveRay) = Affine(1.0, img.left - dom.left)
+bridge(dom::NegativeRay, img::NegativeRay) = Affine(1.0, img.right - dom.right)
+bridge(dom::PositiveRay, img::NegativeRay) = Affine(-1.0, img.right + dom.left)
+bridge(dom::NegativeRay, img::PositiveRay) = Affine(-1.0, img.left - dom.right)
+
+bridge(::RealLine, ::RealLine) = Affine(1.0, 0.0)
+
+function bridge{T <: Union{PositiveRay, NegativeRay}}(dom::T, img::Segment)
+    bridge(dom, InvOddsRatio(), img)
+end
+
+function bridge{T <: Union{PositiveRay, NegativeRay}}(dom::Segment, img::T)
+    bridge(dom, OddsRatio(), img)
+end
+
+bridge(::RealLine, img::Segment) = bridge(Logistic(), img)
+bridge(dom::Segment, ::RealLine) = bridge(dom, Logit())
+
+bridge(::RealLine, img::PositiveRay) = bridge(Exp(), img)
+bridge(dom::PositiveRay, ::RealLine) = bridge(dom, Log())

@@ -12,17 +12,32 @@ end
     @test_throws Exception domain(Logit() ∘ Affine(2.0, 5.0) ∘ Logistic())
 end
 
-@testset "bridge tests" begin
-    t = bridge(0..∞, InvOddsRatio(), -1.0..1.0)
-    dom = domain(t)
-    img = image(t)
-    @test dom == 0..∞
-    @test img == -1.0..1.0
-    xs = vcat([0], sort(collect(rand(dom) for _ in 1:10000)), [∞])
+@testset "bridge default test" begin
+    @test bridge(0..1, -1..1) == Affine(2, -1)
+end
+
+function bridge_complex_test(dom, img, mapping = nothing)
+    t = if mapping == nothing
+        bridge(dom, img)
+    else
+        bridge(dom, mapping, img)
+    end
+    @test domain(t) == dom
+    @test image(t) == img
+    left, right = extrema(dom)
+    xs = vcat([left], sort(collect(rand(dom) for _ in 1:10000)), [right])
     ys = t.(xs)
     @test all(y ∈ img for y in ys)
     @test issorted(ys)
     ymin, ymax = extrema(ys)
-    @test ymin == -1
-    @test ymax == 1
+    yleft, yright = extrema(img)
+    @test ymin == yleft
+    @test ymax == yright
+end
+
+@testset "bridge complex test" begin
+    bridge_complex_test(0..∞, -1.0..1.0)
+    bridge_complex_test(0..∞, ℝ)
+    bridge_complex_test(-1.0..1.0, 0..∞)
+    bridge_complex_test(ℝ, 0..∞)
 end
