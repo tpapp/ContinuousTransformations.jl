@@ -131,8 +131,8 @@ https://github.com/dpsanders/ValidatedNumerics.jl/issues/249
     x / (one(x)-x)
 end
 
-@define_singleton("Transform ℝ to (0,1) using the logistic function.",
-                  Logistic, UnivariateTransformation)
+"Transform ℝ to (0,1) using the logistic function."
+@define_singleton Logistic <: UnivariateTransformation
 
 @univariate_transformation_definitions Logistic(x) begin
     domain = ℝ
@@ -144,8 +144,8 @@ end
     inv = LOGIT
 end
 
-@define_singleton("Transfrom (0,1) to ℝ using the logit function.",
-                  Logit, UnivariateTransformation)
+"Transfrom (0,1) to ℝ using the logit function."
+@define_singleton Logit <: UnivariateTransformation
 
 @univariate_transformation_definitions Logit(x) begin
     domain = 𝕀
@@ -157,8 +157,8 @@ end
     inv = LOGISTIC
 end
 
-@define_singleton("Maps ``(0,1)`` to ``(0, ∞)`` using ``y = x/(1-x)``.",
-                  OddsRatio, UnivariateTransformation)
+"Maps ``(0,1)`` to ``(0, ∞)`` using ``y = x/(1-x)``."
+@define_singleton OddsRatio <: UnivariateTransformation
 
 @univariate_transformation_definitions OddsRatio(x) begin
     domain = 𝕀
@@ -170,8 +170,8 @@ end
     inv = INVODDSRATIO
 end
 
-@define_singleton("Maps ``(0,∞)`` to ``(0, 1)`` using ``y = x/(1+x)``.",
-                  InvOddsRatio, UnivariateTransformation)
+"Maps ``(0,∞)`` to ``(0, 1)`` using ``y = x/(1+x)``."
+@define_singleton InvOddsRatio <: UnivariateTransformation
 
 @univariate_transformation_definitions InvOddsRatio(x) begin
     domain = ℝ⁺
@@ -186,8 +186,8 @@ end
     inv = ODDSRATIO
 end
 
-@define_singleton("Transform ℝ to the interval (0,∞), using the exponential function.",
-                  Exp, UnivariateTransformation)
+"Transform ℝ to the interval (0,∞), using the exponential function."
+@define_singleton Exp <: UnivariateTransformation
 
 @univariate_transformation_definitions Exp(x) begin
     domain = ℝ
@@ -199,8 +199,8 @@ end
     inv = LOG
 end
 
-@define_singleton("Transform (0,∞) to ℝ  using the logarithm function.",
-                  Log, UnivariateTransformation)
+"Transform (0,∞) to ℝ  using the logarithm function."
+@define_singleton Log <: UnivariateTransformation
 
 @univariate_transformation_definitions Log(x) begin
     domain = ℝ⁺
