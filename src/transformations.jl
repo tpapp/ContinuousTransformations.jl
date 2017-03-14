@@ -3,7 +3,7 @@ export                     # only export constants for singleton types
     LOGJAC,
     JAC,
     UnivariateTransformation,
-    domain, image, isincreasing,
+    domain, image, domain_in_img, isincreasing,
     integral_substitution,
     # univariate transformations
     LOGISTIC,
@@ -44,6 +44,13 @@ function domain end
 Return the image of the transformation.
 """
 function image end
+
+"""
+Return the largest interval in the domain of `f` such that its image is in `img`.
+"""
+function domain_in_image(f::UnivariateTransformation, img::AbstractInterval)
+    inv(f)(img ∩ image(f))
+end
 
 """
 Test whether the transformation is monotone increasing.
@@ -308,11 +315,7 @@ function (c::ComposedTransformation)(x, ::LogJac)
 end
 
 function domain(c::ComposedTransformation)
-    # f(g(x)) is valid iff x ∈ domain(g) and g(x) ∈ domain(f)
-    # the latter is equivalent to inv(g)(domain(f) ∩ domain(inv(g)))
-    @unpack f, g = c
-    invg = inv(g)
-    domain(g) ∩ invg(domain(f) ∩ domain(invg))
+    domain_in_image(c.g, domain(c.f))
 end
 
 function image(c::ComposedTransformation)
