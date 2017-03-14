@@ -2,6 +2,10 @@
     @test PositiveRay(1.0) == 1.0..∞
     @test NegativeRay(2.0) == -∞..2.0
     @test RealLine() == ℝ == -∞..∞
+    @test_throws ArgumentError NaN..NaN
+    @test_throws ArgumentError ∞..(-∞)
+    @test_throws ArgumentError 2..(-1)
+    @test isa(1..2.0, Segment{Float64})
 end
 
 @testset "interval printing" begin
