@@ -3,7 +3,7 @@ export                     # only export constants for singleton types
     LOGJAC,
     JAC,
     UnivariateTransformation,
-    domain, image, domain_in_img, isincreasing,
+    domain, image, domain_in_image, isincreasing,
     integral_substitution,
     # univariate transformations
     LOGISTIC,

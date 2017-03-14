@@ -1,3 +1,9 @@
+@testset "domain in image" begin
+    left, right = extrema(domain_in_image(LOGIT, 0..10.0))
+    @test left ≈ LOGISTIC(0.0)
+    @test right ≈ LOGISTIC(10.0)
+end
+
 @testset "Univariate transformations" begin
     test_univariate(LOGIT)
     test_univariate(LOGISTIC)
@@ -13,3 +19,4 @@
         test_univariate(a, 10)
     end
 end
+
