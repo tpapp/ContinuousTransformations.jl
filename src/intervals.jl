@@ -11,12 +11,20 @@ import Base: in, show, middle, linspace, intersect, extrema
 abstract AbstractInterval
 
 function show(io::IO, x::AbstractInterval)
-    println(io, "[$(left)..$(right)]", extrema(x)...)
+    _show_point(x) = isinf(x) ? print(io, x == Inf ? "∞" : "-∞") : show(io, x)
+    left, right = extrema(x)
+    print(io, "(")
+    _show_point(left)
+    print(io, "..")
+    _show_point(right)
+    print(io, ")")
 end
 
 "The real line [-∞,∞]."
 immutable RealLine <: AbstractInterval
-end 
+end
+
+show(io::IO, ::RealLine) = print(io, "ℝ")
 
 const ℝ = RealLine()
 

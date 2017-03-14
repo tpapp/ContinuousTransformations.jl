@@ -4,6 +4,13 @@
     @test RealLine() == ℝ == -∞..∞
 end
 
+@testset "interval printing" begin
+    @test sprint(show, 1.0..2.0) == "(1.0..2.0)"
+    @test sprint(show, 1.0..∞) == "(1.0..∞)"
+    @test sprint(show, -∞..2.0) == "(-∞..2.0)"
+    @test sprint(show, ℝ) == "ℝ"
+end
+
 @testset "intervals basics" begin
     seg = 1.0..2.0
     posray = 0.0..∞
