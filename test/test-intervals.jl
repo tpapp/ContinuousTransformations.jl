@@ -53,6 +53,12 @@ end
     @test 𝕀== 0.0..1.0
     @test ℝ⁺ == 0.0..∞
     @test ℝ⁻ == -∞..0.0
+    # finiteness
+    @test isfinite(seg) && !isinf(seg)
+    @test !isfinite(posray) && isinf(posray)
+    @test !isfinite(negray) && isinf(negray)
+    @test !isfinite(posray) && isinf(posray)
+    @test !isfinite(ℝ) && isinf(ℝ)
 end
 
 @testset "intervals intersections" begin
