@@ -38,3 +38,15 @@ macro define_isapprox(T, fields...)
         end
     end
 end
+
+"""
+Define a singleton type with the given name and docstring, and a
+constant with the name in uppercase.
+"""
+macro define_singleton(docstring, typename, supertype,
+                       constant = esc(Symbol(uppercase(string(typename)))))
+    quote
+        @doc $docstring immutable $typename <: $supertype end
+        @doc $docstring const $(constant) = $typename()
+    end
+end

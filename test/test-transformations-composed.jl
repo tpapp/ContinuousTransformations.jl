@@ -1,15 +1,15 @@
 @testset "composed transformation calculations" begin
     a = Affine(1.0,2.0)
-    test_univariate(Logit() ∘ a)
-    test_univariate(a ∘ Logit())
-    test_univariate(Logistic() ∘ a)
-    test_univariate(a ∘ Logistic())
-    test_univariate(OddsRatio() ∘ a)
-    test_univariate(a ∘ OddsRatio())
+    test_univariate(LOGIT ∘ a)
+    test_univariate(a ∘ LOGIT)
+    test_univariate(LOGISTIC ∘ a)
+    test_univariate(a ∘ LOGISTIC)
+    test_univariate(ODDSRATIO ∘ a)
+    test_univariate(a ∘ ODDSRATIO)
 end
 
 @testset "composed transformation domains" begin
-    @test_throws Exception domain(Logit() ∘ Affine(2.0, 5.0) ∘ Logistic())
+    @test_throws Exception domain(LOGIT ∘ Affine(2.0, 5.0) ∘ LOGISTIC)
 end
 
 @testset "bridge default test" begin

@@ -1,10 +1,10 @@
 @testset "Univariate transformations" begin
-    test_univariate(Logit())
-    test_univariate(Logistic())
-    test_univariate(Log())
-    test_univariate(Exp())
-    test_univariate(OddsRatio())
-    test_univariate(InvOddsRatio())
+    test_univariate(LOGIT)
+    test_univariate(LOGISTIC)
+    test_univariate(LOG)
+    test_univariate(EXP)
+    test_univariate(ODDSRATIO)
+    test_univariate(INVODDSRATIO)
     for _ in 1:100
         test_univariate(Power(abs(randn())), 10)
     end

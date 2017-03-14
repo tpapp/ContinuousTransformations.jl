@@ -1,4 +1,4 @@
-export
+export                     # only export constants for singleton types
     # general
     LOGJAC,
     JAC,
@@ -6,12 +6,12 @@ export
     domain, image, isincreasing,
     integral_substitution,
     # univariate transformations
-    Logistic,
-    Logit,
-    Exp,
-    Log,
-    OddsRatio,
-    InvOddsRatio,
+    LOGISTIC,
+    LOGIT,
+    EXP,
+    LOG,
+    ODDSRATIO,
+    INVODDSRATIO,
     Affine,
     Power,
     # composition
@@ -97,7 +97,7 @@ substitution. Return the transformed function and the domain.
 Example:
 
 ```julia
-f, D = integral_substitution(InvOddsRatio(), x->exp(-x^2), 0..Inf)
+f, D = integral_substitution(INVODDSRATIO, x->exp(-x^2), 0..Inf)
 ```
 
 will return values such that
@@ -124,23 +124,21 @@ https://github.com/dpsanders/ValidatedNumerics.jl/issues/249
     x / (one(x)-x)
 end
 
-"Transform ℝ to (0,1) using the logistic function."
-immutable Logistic <: UnivariateTransformation end
+@define_singleton("Transform ℝ to (0,1) using the logistic function.",
+                  Logistic, UnivariateTransformation)
 
 @univariate_transformation_definitions Logistic(x) begin
     domain = ℝ
     image = 𝕀
     mapping = one(x) / (one(x) + exp(-x))
     isincreasing = true
-    mapping_and_jac = (ℓ = Logistic()(x); (ℓ, exp(-x) * ℓ^2))
+    mapping_and_jac = (ℓ = LOGISTIC(x); (ℓ, exp(-x) * ℓ^2))
     logjac = -x-2*log1pexp(-x)
-    inv = Logit()
+    inv = LOGIT
 end
 
-"""
-Transfrom (0,1) to ℝ using the logit function.
-"""
-immutable Logit <: UnivariateTransformation end
+@define_singleton("Transfrom (0,1) to ℝ using the logit function.",
+                  Logit, UnivariateTransformation)
 
 @univariate_transformation_definitions Logit(x) begin
     domain = 𝕀
@@ -149,13 +147,11 @@ immutable Logit <: UnivariateTransformation end
     isincreasing = true
     jac = 1/(x*(1-x))
     logjac = -(log(x)+(log(1-x)))
-    inv = Logistic()
+    inv = LOGISTIC
 end
 
-"""
-Maps ``(0,1)`` to ``(0, ∞)`` using ``y = x/(1-x)``.
-"""
-immutable OddsRatio <: UnivariateTransformation end
+@define_singleton("Maps ``(0,1)`` to ``(0, ∞)`` using ``y = x/(1-x)``.",
+                  OddsRatio, UnivariateTransformation)
 
 @univariate_transformation_definitions OddsRatio(x) begin
     domain = 𝕀
@@ -164,13 +160,11 @@ immutable OddsRatio <: UnivariateTransformation end
     isincreasing = true
     jac = one(x)/((one(x)-x)^2)
     logjac = -2*log(1-x)
-    inv = InvOddsRatio()
+    inv = INVODDSRATIO
 end
 
-"""
-Maps ``(0,∞)`` to ``(0, 1)`` using ``y = x/(1+x)``.
-"""
-immutable InvOddsRatio <: UnivariateTransformation end
+@define_singleton("Maps ``(0,∞)`` to ``(0, 1)`` using ``y = x/(1+x)``.",
+                  InvOddsRatio, UnivariateTransformation)
 
 @univariate_transformation_definitions InvOddsRatio(x) begin
     domain = ℝ⁺
@@ -182,11 +176,11 @@ immutable InvOddsRatio <: UnivariateTransformation end
     isincreasing = true
     jac = (1+x)^(-2)
     logjac = -2*log1p(x)
-    inv = OddsRatio()
+    inv = ODDSRATIO
 end
 
-"Transform ℝ to the interval (0,∞), using the exponential function."
-immutable Exp <: UnivariateTransformation end
+@define_singleton("Transform ℝ to the interval (0,∞), using the exponential function.",
+                  Exp, UnivariateTransformation)
 
 @univariate_transformation_definitions Exp(x) begin
     domain = ℝ
@@ -195,13 +189,11 @@ immutable Exp <: UnivariateTransformation end
     isincreasing = true
     mapping_and_jac = (ϵ = exp(x); (ϵ,ϵ))
     logjac = x
-    inv = Log()
+    inv = LOG
 end
 
-"""
-Transform (0,∞) to ℝ  using the logarithm function.
-"""
-immutable Log <: UnivariateTransformation end
+@define_singleton("Transform (0,∞) to ℝ  using the logarithm function.",
+                  Log, UnivariateTransformation)
 
 @univariate_transformation_definitions Log(x) begin
     domain = ℝ⁺
@@ -210,7 +202,7 @@ immutable Log <: UnivariateTransformation end
     isincreasing = true
     jac = 1/x
     mapping_and_logjac = (ℓ=log(x); (ℓ, -ℓ))
-    inv = Exp()
+    inv = EXP
 end
 
 """
@@ -371,15 +363,15 @@ bridge(dom::NegativeRay, img::PositiveRay) = Affine(-1.0, img.left - dom.right)
 bridge(::RealLine, ::RealLine) = Affine(1.0, 0.0)
 
 function bridge{T <: Union{PositiveRay, NegativeRay}}(dom::T, img::Segment)
-    bridge(dom, InvOddsRatio(), img)
+    bridge(dom, INVODDSRATIO, img)
 end
 
 function bridge{T <: Union{PositiveRay, NegativeRay}}(dom::Segment, img::T)
-    bridge(dom, OddsRatio(), img)
+    bridge(dom, ODDSRATIO, img)
 end
 
-bridge(::RealLine, img::Segment) = bridge(Logistic(), img)
-bridge(dom::Segment, ::RealLine) = bridge(dom, Logit())
+bridge(::RealLine, img::Segment) = bridge(LOGISTIC, img)
+bridge(dom::Segment, ::RealLine) = bridge(dom, LOGIT)
 
-bridge(::RealLine, img::PositiveRay) = bridge(Exp(), img)
-bridge(dom::PositiveRay, ::RealLine) = bridge(dom, Log())
+bridge(::RealLine, img::PositiveRay) = bridge(EXP, img)
+bridge(dom::PositiveRay, ::RealLine) = bridge(dom, LOG)
