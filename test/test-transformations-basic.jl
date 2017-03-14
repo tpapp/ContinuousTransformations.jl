@@ -19,4 +19,3 @@ end
         test_univariate(a, 10)
     end
 end
-

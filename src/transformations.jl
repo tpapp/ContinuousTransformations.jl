@@ -17,7 +17,7 @@ export                     # only export constants for singleton types
     # composition
     bridge
 
-import Base: inv
+import Base: inv, show
 
 import Compat: ∘                # replace with Base in 0.6
 
@@ -94,6 +94,7 @@ macro univariate_transformation_definitions(Tx, keys_and_values)
     maybe_form!(:mapping_and_jac, e -> :(($f::$T)($x, ::Jac) = $(e)))
     maybe_form!(:logjac, e -> :(($f::$T)($x, ::LogJac) = ($f($x), $(e))))
     maybe_form!(:mapping_and_logjac, e -> :(($f::$T)($x, ::LogJac) = $(e)))
+    maybe_form!(:show, e -> :($(esc(:show))(io::IO, ::$T) = print(io, $(e))))
     quote $(forms...) end
 end
 
@@ -142,6 +143,7 @@ end
     mapping_and_jac = (ℓ = LOGISTIC(x); (ℓ, exp(-x) * ℓ^2))
     logjac = -x-2*log1pexp(-x)
     inv = LOGIT
+    show = "x ↦ 1/(1+e⁻ˣ)"
 end
 
 "Transfrom (0,1) to ℝ using the logit function."
@@ -155,6 +157,7 @@ end
     jac = 1/(x*(1-x))
     logjac = -(log(x)+(log(1-x)))
     inv = LOGISTIC
+    show = "x ↦ log(x/(1-x))"
 end
 
 "Maps ``(0,1)`` to ``(0, ∞)`` using ``y = x/(1-x)``."
@@ -168,6 +171,7 @@ end
     jac = one(x)/((one(x)-x)^2)
     logjac = -2*log(1-x)
     inv = INVODDSRATIO
+    show = "x ↦ x/(1-x)"
 end
 
 "Maps ``(0,∞)`` to ``(0, 1)`` using ``y = x/(1+x)``."
@@ -184,6 +188,7 @@ end
     jac = (1+x)^(-2)
     logjac = -2*log1p(x)
     inv = ODDSRATIO
+    show = "x ↦ x/(1+x)"
 end
 
 "Transform ℝ to the interval (0,∞), using the exponential function."
@@ -197,6 +202,7 @@ end
     mapping_and_jac = (ϵ = exp(x); (ϵ,ϵ))
     logjac = x
     inv = LOG
+    show = "x ↦ eˣ"
 end
 
 "Transform (0,∞) to ℝ  using the logarithm function."
@@ -210,6 +216,7 @@ end
     jac = 1/x
     mapping_and_logjac = (ℓ=log(x); (ℓ, -ℓ))
     inv = EXP
+    show = "x ↦ log(x)"
 end
 
 """
@@ -227,6 +234,8 @@ end
 Affine{T}(α::T, β::T) = Affine{T}(α, β)
 
 Affine(α, β) = Affine(promote(α, β)...)
+
+show(io::IO, x::Affine) = print(io, "x ↦ $(x.α)⋅x + $(x.β)")
 
 @univariate_transformation_definitions Affine(x) begin
     domain = ℝ
@@ -265,6 +274,8 @@ end
 end
 
 Power{T}(γ::T) = Power{T}(γ)
+
+show(io::IO, x::Power) = print(io, "x ↦ x^$(x.γ)")
 
 @univariate_transformation_definitions Power(x) begin
     domain = ℝ⁺
