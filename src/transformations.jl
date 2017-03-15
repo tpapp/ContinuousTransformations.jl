@@ -57,6 +57,12 @@ Test whether the transformation is monotone increasing.
 """
 function isincreasing end
 
+"""
+Test whether the transformation is the identity. May not idenfity all
+identity transformations.
+"""
+isidentity(::UnivariateTransformation) = false
+
 # TODO use when https://github.com/JuliaLang/julia/issues/14919 is fixed, use
 #
 # function (f::T){T <: UnivariateTransformation}(x::AbstractInterval)
@@ -235,7 +241,7 @@ Affine{T}(α::T, β::T) = Affine{T}(α, β)
 
 Affine(α, β) = Affine(promote(α, β)...)
 
-show(io::IO, x::Affine) = print(io, "x ↦ $(x.α)⋅x + $(x.β)")
+show(io::IO, a::Affine) = print(io, isidentity(a) ? "x ↦ x" : "x ↦ $(a.α)⋅x + $(a.β)")
 
 @univariate_transformation_definitions Affine(x) begin
     domain = ℝ
@@ -254,6 +260,8 @@ function inv{T}(a::Affine{T})
     @unpack α, β = a
     Affine(one(T)/α, -β/α)
 end
+
+isidentity{T}(a::Affine{T}) = a.α == one(T) && a.β == zero(T)
 
 "Transform ℝ⁺ to itself using `y = x^γ`."
 @auto_hash_equals immutable Power{T <: Real} <: UnivariateTransformation
@@ -329,7 +337,15 @@ end
 inv(c::ComposedTransformation) = ComposedTransformation(inv(c.g), inv(c.f))
 
 function ∘(f::UnivariateTransformation, g::UnivariateTransformation)
-    ComposedTransformation(f, g)
+    if isidentity(f)
+        g
+    elseif isidentity(g)
+        f
+    elseif f == inv(g)
+        Affine(1.0,0.0)
+    else
+        ComposedTransformation(f, g)
+    end
 end
 
 ∘(f::Affine, g::Affine) = Affine(f.α*g.α, fma(f.α, g.β, f.β))
