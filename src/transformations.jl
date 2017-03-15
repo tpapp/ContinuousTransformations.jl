@@ -255,15 +255,6 @@ function inv{T}(a::Affine{T})
     Affine(one(T)/α, -β/α)
 end
 
-"""
-Return an Affine map that maps the first interval to the second.
-"""
-function Affine(i1::Segment, i2::Segment)
-    α = width(i2) / width(i1)
-    β = middle(i2) - middle(i1) * α
-    Affine(α, β)
-end
-
 "Transform ℝ⁺ to itself using `y = x^γ`."
 @auto_hash_equals immutable Power{T <: Real} <: UnivariateTransformation
     γ::T
@@ -367,8 +358,12 @@ function bridge{Tdom,Timg}(dom::Tdom, img::Timg)
     throw(ArgumentError("Can't bridge a $(Tdom) to a $(Timg) without a transformation."))
 end
 
-bridge(dom::Segment, img::Segment) = Affine(dom, img)
-
+function bridge(dom::Segment, img::Segment)
+    α = width(img) / width(dom)
+    β = middle(img) - middle(dom) * α
+    Affine(α, β)
+end
+    
 bridge(dom::PositiveRay, img::PositiveRay) = Affine(1.0, img.left - dom.left)
 bridge(dom::NegativeRay, img::NegativeRay) = Affine(1.0, img.right - dom.right)
 bridge(dom::PositiveRay, img::NegativeRay) = Affine(-1.0, img.right + dom.left)
