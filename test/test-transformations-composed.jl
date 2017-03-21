@@ -16,6 +16,9 @@ end
     @test bridge(0..1, -1..1) == Affine(2, -1)
 end
 
+"""
+Test for bijections between domain `dom` and image `img`.
+"""
 function bridge_complex_test(dom, img, mapping = nothing)
     t = if mapping == nothing
         bridge(dom, img)
@@ -36,11 +39,13 @@ function bridge_complex_test(dom, img, mapping = nothing)
 end
 
 @testset "bridge complex test" begin
-    bridge_complex_test(0..∞, -1.0..1.0)
-    bridge_complex_test(0..∞, ℝ)
-    bridge_complex_test(-1.0..1.0, 0..∞)
-    bridge_complex_test(ℝ, 0..∞)
+    bridge_complex_test(ℝ⁺, -1.0..1.0)
+    bridge_complex_test(ℝ⁺, ℝ)
+    bridge_complex_test(-1.0..1.0, ℝ⁺)
+    bridge_complex_test(ℝ, ℝ⁺)
     bridge_complex_test(ℝ, 𝕀, REALCIRCLE)
     bridge_complex_test(ℝ, 𝕀, REALCIRCLE ∘ Affine(4.0))
+    bridge_complex_test(𝕀, ℝ, INVREALCIRCLE ∘ Affine(4.0))
+    # bridge_complex_test(𝕀, 0..5.0)
 end
 
