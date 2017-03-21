@@ -426,8 +426,8 @@ function bridge{T <: Union{PositiveRay, NegativeRay}}(dom::Segment, img::T)
     bridge(dom, ODDSRATIO, img)
 end
 
-bridge(::RealLine, img::Segment) = bridge(LOGISTIC, img)
-bridge(dom::Segment, ::RealLine) = bridge(dom, LOGIT)
+bridge(::RealLine, img::Segment) = bridge(REALCIRCLE, img)
+bridge(dom::Segment, ::RealLine) = bridge(dom, INVREALCIRCLE)
 
 bridge(::RealLine, img::PositiveRay) = bridge(EXP, img)
 bridge(dom::PositiveRay, ::RealLine) = bridge(dom, LOG)
