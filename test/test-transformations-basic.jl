@@ -11,6 +11,8 @@ end
     test_univariate(EXP)
     test_univariate(ODDSRATIO)
     test_univariate(INVODDSRATIO)
+    test_univariate(REALCIRCLE)
+    test_univariate(INVREALCIRCLE)
     for _ in 1:100
         test_univariate(Power(abs(randn())), 10)
     end

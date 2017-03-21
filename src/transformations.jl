@@ -12,6 +12,8 @@ export                     # only export constants for singleton types
     LOG,
     ODDSRATIO,
     INVODDSRATIO,
+    REALCIRCLE,
+    INVREALCIRCLE,
     Affine,
     Power,
     # composition
@@ -195,6 +197,35 @@ end
     logjac = -2*log1p(x)
     inv = ODDSRATIO
     show = "x ↦ x/(1+x)"
+end
+
+"Map ``ℝ`` to ``(-1,1)`` using ``y = x/√(1+x^2)``."
+@define_singleton RealCircle <: UnivariateTransformation
+
+@univariate_transformation_definitions RealCircle(x) begin
+    domain = ℝ
+    image = -1..1
+    mapping = x/√(1+x^2)
+    isincreasing = true
+    jac = (1+x^2)^(-1.5)
+    logjac = -1.5*log1psq(x)
+    inv = INVREALCIRCLE
+    show = "x ↦ x/√(1+x²)"
+end
+
+
+"Map ``(-1,1)`` to ``ℝ`` using ``y = x/√(1-x²)``."
+@define_singleton InvRealCircle <: UnivariateTransformation
+
+@univariate_transformation_definitions InvRealCircle(x) begin
+    domain = -1..1
+    image = ℝ
+    mapping = x/√(1-x^2)
+    isincreasing = true
+    jac = (1-x^2)^(-1.5)
+    logjac = -1.5*(log1p(x)+log1p(-x))
+    inv = REALCIRCLE
+    show = "x ↦ x/√(1-x²)"
 end
 
 "Transform ℝ to the interval (0,∞), using the exponential function."
