@@ -1,4 +1,5 @@
 using ContinuousTransformations
+using ArgCheck
 using Base.Test
 import Compat: ∘
 

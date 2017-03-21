@@ -1,9 +1,9 @@
 @testset "composed transformation calculations" begin
     a = Affine(1.0,2.0)
-    test_univariate(LOGIT ∘ a)
-    test_univariate(a ∘ LOGIT)
-    test_univariate(LOGISTIC ∘ a)
-    test_univariate(a ∘ LOGISTIC)
+    test_univariate(LOGIT ∘ a, AD_exceptions = logit_exceptions(inv(a)))
+    test_univariate(a ∘ LOGIT, AD_exceptions = logit_exceptions())
+    test_univariate(LOGISTIC ∘ a, AD_exceptions = logistic_exceptions())
+    test_univariate(a ∘ LOGISTIC, AD_exceptions = logistic_exceptions())
     test_univariate(ODDSRATIO ∘ a)
     test_univariate(a ∘ ODDSRATIO)
 end
@@ -40,4 +40,5 @@ end
     bridge_complex_test(0..∞, ℝ)
     bridge_complex_test(-1.0..1.0, 0..∞)
     bridge_complex_test(ℝ, 0..∞)
+    bridge_complex_test(ℝ, 𝕀, REALCIRCLE)
 end

@@ -6,15 +6,11 @@ export                     # only export constants for singleton types
     domain, image, domain_in_image, isincreasing,
     integral_substitution,
     # univariate transformations
-    LOGISTIC,
-    LOGIT,
-    EXP,
-    LOG,
-    ODDSRATIO,
-    INVODDSRATIO,
-    REALCIRCLE,
-    INVREALCIRCLE,
-    Affine,
+    LOGISTIC, LOGIT,
+    EXP, LOG,
+    ODDSRATIO, INVODDSRATIO,
+    REALCIRCLE, INVREALCIRCLE,
+    Affine, Shift,
     Power,
     # composition
     bridge
@@ -148,8 +144,8 @@ end
     image = 𝕀
     mapping = one(x) / (one(x) + exp(-x))
     isincreasing = true
-    mapping_and_jac = (ℓ = LOGISTIC(x); (ℓ, exp(-x) * ℓ^2))
-    logjac = -x-2*log1pexp(-x)
+    mapping_and_jac = (ℓ = LOGISTIC(x); (ℓ, ℓ*(1-ℓ)))
+    mapping_and_logjac = (ℓ = LOGISTIC(x); (ℓ, log(ℓ)+log(1-ℓ)))
     inv = LOGIT
     show = "x ↦ 1/(1+e⁻ˣ)"
 end
@@ -205,7 +201,7 @@ end
 @univariate_transformation_definitions RealCircle(x) begin
     domain = ℝ
     image = -1..1
-    mapping = x/√(1+x^2)
+    mapping = isinf(x) ? sign(x) : x/√(1+x^2)
     isincreasing = true
     jac = (1+x^2)^(-1.5)
     logjac = -1.5*log1psq(x)
@@ -271,6 +267,10 @@ end
 Affine{T}(α::T, β::T) = Affine{T}(α, β)
 
 Affine(α, β) = Affine(promote(α, β)...)
+
+Affine{T <: Real}(α::T) = Affine{T}(α, zero(T))
+
+Shift{T <: Real}(β::T) = Affine{T}(zero(T), β)
 
 show(io::IO, a::Affine) = print(io, isidentity(a) ? "x ↦ x" : "x ↦ $(a.α)⋅x + $(a.β)")
 
