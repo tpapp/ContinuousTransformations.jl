@@ -1,7 +1,4 @@
 using ContinuousTransformations
-import ForwardDiff: derivative
-using Cubature
-import Base: rand
 using Base.Test
 import Compat: ∘
 

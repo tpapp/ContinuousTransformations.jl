@@ -1,3 +1,6 @@
+import ForwardDiff: derivative
+import Base: rand
+
 # Return a random float in an interval (for testing).
 rand(::RealLine) = randn()
 rand(ray::PositiveRay) = ray.left + abs(randn())
