@@ -76,7 +76,7 @@ function test_univariate_scalar{T}(f::UnivariateTransformation, x::T;
 end
 
 # some exceptions below
-logit_exceptions(t=Affine(1.0)) = Dict(t(1.0) => Inf)
+logit_exceptions(t=Multiply(1.0)) = Dict(t(1.0) => Inf)
 
 logistic_exceptions() = Dict(-Inf => 0.0)
 

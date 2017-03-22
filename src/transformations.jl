@@ -10,7 +10,7 @@ export                     # only export constants for singleton types
     EXP, LOG,
     ODDSRATIO, INVODDSRATIO,
     REALCIRCLE, INVREALCIRCLE,
-    Affine, Shift,
+    Affine, Multiply, Shift,
     Power,
     # composition
     bridge
@@ -268,9 +268,9 @@ Affine{T}(α::T, β::T) = Affine{T}(α, β)
 
 Affine(α, β) = Affine(promote(α, β)...)
 
-Affine{T <: Real}(α::T) = Affine{T}(α, zero(T))
+Multiply{T <: Real}(α::T) = Affine{T}(α, zero(T))
 
-Shift{T <: Real}(β::T) = Affine{T}(zero(T), β)
+Shift{T <: Real}(β::T) = Affine{T}(one(T), β)
 
 show(io::IO, a::Affine) = print(io, isidentity(a) ? "x ↦ x" : "x ↦ $(a.α)⋅x + $(a.β)")
 

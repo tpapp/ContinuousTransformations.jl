@@ -44,8 +44,8 @@ end
     bridge_complex_test(-1.0..1.0, ℝ⁺)
     bridge_complex_test(ℝ, ℝ⁺)
     bridge_complex_test(ℝ, 𝕀, REALCIRCLE)
-    bridge_complex_test(ℝ, 𝕀, REALCIRCLE ∘ Affine(4.0))
-    bridge_complex_test(𝕀, ℝ, INVREALCIRCLE ∘ Affine(4.0))
+    bridge_complex_test(ℝ, 𝕀, REALCIRCLE ∘ Multiply(4.0))
+    bridge_complex_test(𝕀, ℝ, INVREALCIRCLE ∘ Multiply(4.0))
     # bridge_complex_test(𝕀, 0..5.0)
 end
 
