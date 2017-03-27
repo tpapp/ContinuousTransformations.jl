@@ -298,7 +298,7 @@ isidentity{T}(a::Affine{T}) = a.α == one(T) && a.β == zero(T)
 @auto_hash_equals immutable Power{T <: Real} <: UnivariateTransformation
     γ::T
     function Power(γ)
-        @assert γ > zero(γ)
+        @assert γ ≠ zero(γ)
         new(γ)
     end
 end
@@ -310,17 +310,24 @@ show(io::IO, x::Power) = print(io, "x ↦ x^$(x.γ)")
 @univariate_transformation_definitions Power(x) begin
     domain = ℝ⁺
     image = ℝ⁺
-    isincreasing = true
 end
+
+isincreasing(p::Power) = p.γ > 0
 
 function (p::Power)(x)
     @argcheck x ≥ zero(x) DomainError()
     x^p.γ
 end
 
-(p::Power)(x, ::Jac) = p(x), p.γ*x^(p.γ-1)
+function (p::Power)(x, ::Jac)
+    @unpack γ = p
+    p(x), abs(γ)*x^(γ-one(γ))
+end
 
-(p::Power)(x, ::LogJac) = p(x), log(p.γ)+(p.γ-1)*log(x)
+function (p::Power)(x, ::LogJac)
+    @unpack γ = p
+    p(x), log(abs(γ))+(γ-one(γ))*log(x)
+end
 
 inv(p::Power) = Power(1/p.γ)
 

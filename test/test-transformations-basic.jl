@@ -14,7 +14,7 @@ end
     test_univariate(REALCIRCLE)
     test_univariate(INVREALCIRCLE)
     for _ in 1:100
-        test_univariate(Power(abs(randn())), N = 10)
+        test_univariate(Power(randn()), N = 10)
     end
     for _ in 1:10
         test_univariate(Affine(randn(), randn()), N = 10)
