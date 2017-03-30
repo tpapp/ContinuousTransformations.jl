@@ -31,7 +31,7 @@ const JAC = Jac()
 Univariate monotone transformation, either increasing or decreasing on
 the whole domain.
 """
-abstract UnivariateTransformation
+abstract UnivariateTransformation <: Function
 
 """
 Return the domain of the transformation.
