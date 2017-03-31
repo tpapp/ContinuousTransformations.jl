@@ -26,24 +26,23 @@ In addition, the package includes types to represent intervals, and some basic m
 Examples:
 ```julia
 using ContinuousTransformations
-t = Logistic() # Transform ℝ to (0,1) using the logistic function.
+t = LOGISTIC   # Transform ℝ to (0,1) using the logistic function.
 t(0.0)         # 0.5
-inv(t)         # Logit()
+inv(t)         # LOGIT
 t(0, JAC)      # 0.5,0.25
 t(0, LOGJAC)   # 0.5,-1.3862943611198906
 domain(t)      # -∞..∞
-image(t)       #0.0..1.0
+image(t)       # 0.0..1.0
 ```
 
 ## Example for transforming integrals
 
 ```julia
-using ValidatedNumerics
 using ContinuousTransformations
 using Cubature
 
-f, dom = integral_substitution(InvOddsRatio(), x->exp(-x^2), 0..Inf)
-hquadrature(f, dom.left, dom.right)[1] ≈ √π/2 # true
+f, dom = integral_substitution(INVODDSRATIO, x->exp(-x^2), 0..Inf)
+hquadrature(f, extrema(dom)...)[1] ≈ √π/2 # true
 ```
 
 ## Planned
