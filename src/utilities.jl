@@ -1,3 +1,5 @@
+export @define_singleton
+
 """
 From 
 
