@@ -19,13 +19,11 @@ import Base: inv, show
 
 import Compat: ∘                # replace with Base in 0.6
 
-immutable LogJac end
+"The log of the determinant of the Jacobian as the second argument."
+@define_singleton LogJac <: Any
 
-const LOGJAC = LogJac()
-
-immutable Jac end
-
-const JAC = Jac()
+"The log of the determinant of the Jacobian as the second argument."
+@define_singleton Jac <: Any
 
 """
 Univariate monotone transformation, either increasing or decreasing on
