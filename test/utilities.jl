@@ -66,13 +66,16 @@ function test_univariate_scalar{T}(f::UnivariateTransformation, x::T;
     y = f(x)
     @test y ∈ image(f)
     @test inv(f)(y) ≈ x
-    (y2, jac) = f(x, JAC)
+    (y2, deriv) = f(x, DERIV)
+    expected_deriv = get(AD_exceptions, x, derivative(f, x))
     @test y == y2
-    expected_jac = get(AD_exceptions, x, abs(derivative(f, x)))
-    @test jac ≈ expected_jac
+    @test deriv ≈ expected_deriv
+    (y3, jac) = f(x, JAC)
+    @test y == y3
+    @test jac ≈ abs(expected_deriv)
     (y3, logjac) = f(x, LOGJAC)
     @test y == y3
-    @test logjac ≈ log(expected_jac)
+    @test logjac ≈ log(abs(expected_deriv))
 end
 
 # some exceptions below

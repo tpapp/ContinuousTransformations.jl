@@ -1,3 +1,6 @@
+using MacroTools
+using ArgCheck
+
 export @define_singleton
 
 """

@@ -1,3 +1,5 @@
+using AutoHashEquals
+
 export
     AbstractInterval, ∞,
     RealLine, ℝ,
@@ -51,13 +53,13 @@ end
 
 PositiveRay{T}(left::T) = PositiveRay{T}(left)
 
-const ℝ⁺ = PositiveRay(0.0)
-
 in(x::Real, ray::PositiveRay) = ray.left ≤ x
 
 extrema(ray::PositiveRay) = ray.left, ∞
 
 isfinite(::PositiveRay) = false
+
+const ℝ⁺ = PositiveRay(0.0)
 
 """
 The interval (-∞,right).
@@ -72,13 +74,13 @@ end
 
 NegativeRay{T}(right::T) = NegativeRay{T}(right)
 
-const ℝ⁻ = NegativeRay(0.0)
-
 in(x::Real, ray::NegativeRay) = x ≤ ray.right
 
 extrema(ray::NegativeRay) = -∞, ray.right
 
 isfinite(::NegativeRay) = false
+
+const ℝ⁻ = NegativeRay(0.0)
 
 """
 The interval [a,b], with a < b enforced.

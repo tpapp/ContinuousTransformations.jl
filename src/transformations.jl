@@ -1,6 +1,16 @@
+using ArgCheck
+using MacroTools
+using Parameters
+using StatsFuns
+
+import Base: inv, show
+
+import Compat: ∘                # replace with Base in 0.6
+
 export                     # only export constants for singleton types
     # general
     LOGJAC,
+    DERIV,
     JAC,
     UnivariateTransformation,
     domain, image, domain_in_image, isincreasing,
@@ -15,15 +25,15 @@ export                     # only export constants for singleton types
     # composition
     bridge
 
-import Base: inv, show
-
-import Compat: ∘                # replace with Base in 0.6
 
 "The log of the determinant of the Jacobian as the second argument."
 @define_singleton LogJac <: Any
 
 "The log of the determinant of the Jacobian as the second argument."
 @define_singleton Jac <: Any
+
+"The derivative (Jacobian) as the second argument."
+@define_singleton Deriv <: Any
 
 """
 Univariate monotone transformation, either increasing or decreasing on
@@ -74,29 +84,43 @@ where parameter are not needed for the calculation.
 The first argument is of the form `T(x)`, provides the type and the
 variable which contains the argument for mappings.
 
-See examples for usage.
+Forms that are generated are documented in the function source.
 """
 macro univariate_transformation_definitions(Tx, keys_and_values)
     @capture Tx T_(x_)
     dict = block_key_value_dict(keys_and_values)
     forms = []
-    f = esc(:f)
-    maybe_form!(key, f) = haskey(dict, key) && push!(forms, f(dict[key]))
-    maybe_form!(:domain, e -> :($(esc(:domain))(::$T) = $(e)))
-    maybe_form!(:image, e -> :($(esc(:image))(::$T) = $(e)))
-    maybe_form!(:inv, e -> :($(esc(:inv))(::$T) = $(e)))
-    maybe_form!(:mapping, e -> :((::$T)($x) = $(e)))
-    push!(forms, quote
-          function ($f::$T)(x::AbstractInterval)
-          monotone_map_interval($f, x, isincreasing($f))
-          end
-          end)
-    maybe_form!(:isincreasing, e -> :($(esc(:isincreasing))($x::$T) = $(e)))
-    maybe_form!(:jac, e -> :(($f::$T)($x, ::Jac) = ($f($x), $(e))))
-    maybe_form!(:mapping_and_jac, e -> :(($f::$T)($x, ::Jac) = $(e)))
-    maybe_form!(:logjac, e -> :(($f::$T)($x, ::LogJac) = ($f($x), $(e))))
-    maybe_form!(:mapping_and_logjac, e -> :(($f::$T)($x, ::LogJac) = $(e)))
-    maybe_form!(:show, e -> :($(esc(:show))(io::IO, ::$T) = print(io, $(e))))
+    ff = esc(:f)
+    function maybe_forms!(key, fs...)
+        if haskey(dict, key)
+            raw_form = dict[key]
+            for f in fs
+                push!(forms, f(raw_form))
+            end
+        end
+    end
+    maybe_forms!(:domain, e -> :($(esc(:domain))(::$T) = $(e)))
+    maybe_forms!(:image, e -> :($(esc(:image))(::$T) = $(e)))
+    maybe_forms!(:inv, e -> :($(esc(:inv))(::$T) = $(e)))
+    maybe_forms!(:mapping, e -> :((::$T)($x) = $(e)))
+    push!(forms, :(($ff::$T)(x::AbstractInterval) =
+                   monotone_map_interval($ff, x, isincreasing($ff))))
+    # is the transformation strictly increasing?
+    maybe_forms!(:isincreasing, e -> :($(esc(:isincreasing))($x::$T) = $(e)))
+    # derivative _and_ its absolute value, but only for increasing transformations
+    maybe_forms!(:deriv_increasing,
+                 e -> :(($ff::$T)($x, ::Deriv) = ($ff($x), $(e))),
+                 e -> :(($ff::$T)($x, ::Jac) = ($ff($x), $(e))))
+    # _both_ the value and the derivative, when values can be reused for speed/accuracy
+    maybe_forms!(:mapping_and_deriv_increasing,
+                 e -> :(($ff::$T)($x, ::Deriv) = $(e)),
+                 e -> :(($ff::$T)($x, ::Jac) = $(e)))
+    # log det Jacobian
+    maybe_forms!(:logjac, e -> :(($ff::$T)($x, ::LogJac) = ($ff($x), $(e))))
+    # mapping and log det Jacobian
+    maybe_forms!(:mapping_and_logjac, e -> :(($ff::$T)($x, ::LogJac) = $(e)))
+    # printed by show
+    maybe_forms!(:show, e -> :($(esc(:show))(io::IO, ::$T) = print(io, $(e))))
     quote $(forms...) end
 end
 
@@ -142,7 +166,7 @@ end
     image = 𝕀
     mapping = one(x) / (one(x) + exp(-x))
     isincreasing = true
-    mapping_and_jac = (ℓ = LOGISTIC(x); (ℓ, ℓ*(1-ℓ)))
+    mapping_and_deriv_increasing = (ℓ = LOGISTIC(x); (ℓ, ℓ*(1-ℓ)))
     mapping_and_logjac = (ℓ = LOGISTIC(x); (ℓ, log(ℓ)+log(1-ℓ)))
     inv = LOGIT
     show = "x ↦ 1/(1+e⁻ˣ)"
@@ -156,8 +180,8 @@ end
     image = ℝ
     mapping = log(_oddsratio(x))
     isincreasing = true
-    jac = 1/(x*(1-x))
-    logjac = -(log(x)+(log(1-x)))
+    deriv_increasing = one(x)/(x*(one(x)-x))
+    logjac = -(log(x)+(log(one(x)-x)))
     inv = LOGISTIC
     show = "x ↦ log(x/(1-x))"
 end
@@ -170,7 +194,7 @@ end
     image = ℝ⁺
     mapping = _oddsratio(x)
     isincreasing = true
-    jac = one(x)/((one(x)-x)^2)
+    deriv_increasing = one(x)/((one(x)-x)^2)
     logjac = -2*log(1-x)
     inv = INVODDSRATIO
     show = "x ↦ x/(1-x)"
@@ -187,7 +211,7 @@ end
         x == Inf ? one(x) : x/(1+x)
     end
     isincreasing = true
-    jac = (1+x)^(-2)
+    deriv_increasing = (one(x)+x)^(-2)
     logjac = -2*log1p(x)
     inv = ODDSRATIO
     show = "x ↦ x/(1+x)"
@@ -201,7 +225,7 @@ end
     image = -1..1
     mapping = isinf(x) ? sign(x) : x/√(1+x^2)
     isincreasing = true
-    jac = (1+x^2)^(-1.5)
+    deriv_increasing = (one(x)+x^2)^(-1.5)
     logjac = -1.5*log1psq(x)
     inv = INVREALCIRCLE
     show = "x ↦ x/√(1+x²)"
@@ -216,7 +240,7 @@ end
     image = ℝ
     mapping = x/√(1-x^2)
     isincreasing = true
-    jac = (1-x^2)^(-1.5)
+    deriv_increasing = (one(x)-x^2)^(-1.5)
     logjac = -1.5*(log1p(x)+log1p(-x))
     inv = REALCIRCLE
     show = "x ↦ x/√(1-x²)"
@@ -230,7 +254,7 @@ end
     image = ℝ⁺
     mapping = exp(x)
     isincreasing = true
-    mapping_and_jac = (ϵ = exp(x); (ϵ,ϵ))
+    mapping_and_deriv_increasing = (ϵ = exp(x); (ϵ,ϵ))
     logjac = x
     inv = LOG
     show = "x ↦ eˣ"
@@ -244,7 +268,7 @@ end
     image = ℝ
     mapping = log(x)
     isincreasing = true
-    jac = 1/x
+    deriv_increasing = one(x)/x
     mapping_and_logjac = (ℓ=log(x); (ℓ, -ℓ))
     inv = EXP
     show = "x ↦ log(x)"
@@ -282,6 +306,8 @@ end
 
 isincreasing{T}(a::Affine{T}) = a.α > zero(T)
 
+(a::Affine)(x, ::Deriv) = a(x), a.α
+
 (a::Affine)(x, ::Jac) = a(x), abs(a.α)
 
 (a::Affine)(x, ::LogJac) = a(x), log(abs(a.α))
@@ -318,6 +344,11 @@ function (p::Power)(x)
     x^p.γ
 end
 
+function (p::Power)(x, ::Deriv)
+    @unpack γ = p
+    p(x), γ*x^(γ-one(γ))
+end
+
 function (p::Power)(x, ::Jac)
     @unpack γ = p
     p(x), abs(γ)*x^(γ-one(γ))
@@ -347,6 +378,12 @@ function show(io::IO, c::ComposedTransformation)
     show(io, c.f)
     println(io, " ∘ ")
     show(io, c.g)
+end
+
+function (c::ComposedTransformation)(x, ::Deriv)
+    y, g′x = c.g(x, DERIV)
+    fy, f′y = c.f(y, DERIV)
+    fy, f′y * g′x
 end
 
 function (c::ComposedTransformation)(x, ::Jac)
