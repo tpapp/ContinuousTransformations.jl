@@ -4,6 +4,7 @@ using Parameters
 using StatsFuns
 
 import Base: inv, show
+import Base.Math.JuliaLibm.log1p # more accurate variant, for REALCIRCLE logjac
 
 import Compat: ∘                # replace with Base in 0.6
 
