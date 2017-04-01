@@ -408,6 +408,8 @@ function image(c::ComposedTransformation)
     f(image(g) ∩ domain(f))
 end
 
+isincreasing(c::ComposedTransformation) = isincreasing(c.f) == isincreasing(c.g)
+
 inv(c::ComposedTransformation) = ComposedTransformation(inv(c.g), inv(c.f))
 
 function ∘(f::UnivariateTransformation, g::UnivariateTransformation)

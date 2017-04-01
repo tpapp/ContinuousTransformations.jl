@@ -8,7 +8,7 @@ probability.
 """
 rand(::RealLine, ::Type{Val{true}}) = randn()
 rand(ray::PositiveRay, ::Type{Val{true}}) = ray.left + abs(randn())
-rand(ray::NegativeRay, ::Type{Val{true}}) = ray.right + abs(randn())
+rand(ray::NegativeRay, ::Type{Val{true}}) = ray.right - abs(randn())
 rand(seg::Segment, ::Type{Val{true}}) = seg.left + width(seg) * rand()
 
 function rand(x::AbstractInterval; left_prob = 0.1, right_prob = 0.1)
@@ -90,7 +90,10 @@ function test_univariate_interval(f::UnivariateTransformation, x::AbstractInterv
     y = f(x)
     left, right = extrema(x)
     f_left, f_right = f(left), f(right)
-    if f_right < f_left
+    if isincreasing(f)
+        @test f_left < f_right
+    else
+        @test f_right < f_left
         f_right, f_left = f_left, f_right
     end
     y_left, y_right = extrema(y)

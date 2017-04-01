@@ -29,20 +29,22 @@ end
 
 """
 Test for bijections between domain `dom` and image `img`.
+
+When `RR`, domain and image of the actual transformation will be infinite.
 """
-function bridge_complex_test(dom, img, mapping = nothing)
+function bridge_complex_test(dom, img; mapping = nothing, RR = false)
     t = if mapping == nothing
         bridge(dom, img)
     else
         bridge(dom, mapping, img)
     end
-    @test domain(t) == dom
-    @test image(t) == img
+    @test domain(t) == (RR ? ℝ : dom)
+    @test image(t) == (RR ? ℝ : img)
     left, right = extrema(dom)
     xs = vcat([left], sort(collect(rand(dom) for _ in 1:10000)), [right])
     ys = t.(xs)
     @test all(y ∈ img for y in ys)
-    @test issorted(ys)
+    @test issorted(ys, rev = !isincreasing(t))
     ymin, ymax = extrema(ys)
     yleft, yright = extrema(img)
     @test ymin == yleft
@@ -54,9 +56,11 @@ end
     bridge_complex_test(ℝ⁺, ℝ)
     bridge_complex_test(-1.0..1.0, ℝ⁺)
     bridge_complex_test(ℝ, ℝ⁺)
-    bridge_complex_test(ℝ, 𝕀, REALCIRCLE)
-    bridge_complex_test(ℝ, 𝕀, REALCIRCLE ∘ Multiply(4.0))
-    bridge_complex_test(𝕀, ℝ, INVREALCIRCLE ∘ Multiply(4.0))
-    # bridge_complex_test(𝕀, 0..5.0)
+    bridge_complex_test(ℝ, 𝕀; mapping = REALCIRCLE)
+    bridge_complex_test(ℝ, 𝕀; mapping = REALCIRCLE ∘ Multiply(4.0))
+    bridge_complex_test(𝕀, ℝ; mapping = INVREALCIRCLE ∘ Multiply(4.0))
+    bridge_complex_test(𝕀, 0..5.0; RR = true)
+    bridge_complex_test(-∞..5, -∞..9; RR = true)
+    bridge_complex_test(ℝ⁺, ℝ⁻; RR = true)
+    bridge_complex_test(ℝ⁺, ℝ⁻; RR = true)
 end
-
