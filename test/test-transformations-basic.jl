@@ -9,6 +9,12 @@ end
     @test Shift(2.0) == Affine(1.0, 2.0)
 end
 
+@testset "Univariate transformation show" begin
+    @test sprint(show, Affine(1, 0)) == "x ↦ x"
+    @test sprint(show, Affine(2, 3)) == "x ↦ 2⋅x + 3"
+    @test sprint(show, Power(2)) == "x ↦ x^2"
+end
+
 @testset "Univariate transformations" begin
     test_univariate(LOGIT, AD_exceptions = logit_exceptions())
     test_univariate(LOGISTIC, AD_exceptions = logistic_exceptions())

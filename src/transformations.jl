@@ -376,7 +376,7 @@ end
 
 function show(io::IO, c::ComposedTransformation)
     show(io, c.f)
-    println(io, " ∘ ")
+    print(io, " ∘ ")
     show(io, c.g)
 end
 
