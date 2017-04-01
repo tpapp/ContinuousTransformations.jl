@@ -84,4 +84,8 @@ end
     @test seg ∩ posray == posray ∩ seg == seg
     @test seg ∩ negray == negray ∩ seg == 1.0..1.5
     @test negray ∩ posray == posray ∩ negray == 0.0..1.5
+    @test posray ∩ (2..∞) == 2..∞
+    @test posray ∩ (-2..∞) == posray
+    @test negray ∩ (-∞..(-7)) == -∞..(-7)
+    @test negray ∩ (-∞..7) == negray
 end
