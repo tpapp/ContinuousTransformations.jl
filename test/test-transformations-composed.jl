@@ -1,13 +1,16 @@
 import Compat: ∘
 
 @testset "composed transformation calculations" begin
-    a = Affine(1.0,2.0)
+    a = Affine(1.5,2.0)
     test_univariate(LOGIT ∘ a, AD_exceptions = logit_exceptions(inv(a)))
     test_univariate(a ∘ LOGIT, AD_exceptions = logit_exceptions())
     test_univariate(LOGISTIC ∘ a, AD_exceptions = logistic_exceptions())
     test_univariate(a ∘ LOGISTIC, AD_exceptions = logistic_exceptions())
     test_univariate(ODDSRATIO ∘ a)
     test_univariate(a ∘ ODDSRATIO)
+    test_univariate(a ∘ a)
+    isidentity(a ∘ inv(a))
+    isidentity(LOGISTIC ∘ LOGIT)
 end
 
 @testset "composed transformation show" begin

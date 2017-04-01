@@ -13,7 +13,7 @@ export                     # only export constants for singleton types
     DERIV,
     JAC,
     UnivariateTransformation,
-    domain, image, domain_in_image, isincreasing,
+    domain, image, domain_in_image, isincreasing, isidentity,
     integral_substitution,
     # univariate transformations
     LOGISTIC, LOGIT,
