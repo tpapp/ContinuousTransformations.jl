@@ -52,15 +52,17 @@ function bridge_complex_test(dom, img; mapping = nothing, RR = false)
 end
 
 @testset "bridge complex test" begin
-    bridge_complex_test(ℝ⁺, -1.0..1.0)
     bridge_complex_test(ℝ⁺, ℝ)
-    bridge_complex_test(-1.0..1.0, ℝ⁺)
     bridge_complex_test(ℝ, ℝ⁺)
+    bridge_complex_test(-1.0..1.0, ℝ⁺)
+    bridge_complex_test(ℝ⁺, -1.0..1.0)
     bridge_complex_test(ℝ, 𝕀; mapping = REALCIRCLE)
     bridge_complex_test(ℝ, 𝕀; mapping = REALCIRCLE ∘ Multiply(4.0))
     bridge_complex_test(𝕀, ℝ; mapping = INVREALCIRCLE ∘ Multiply(4.0))
     bridge_complex_test(𝕀, 0..5.0; RR = true)
     bridge_complex_test(-∞..5, -∞..9; RR = true)
     bridge_complex_test(ℝ⁺, ℝ⁻; RR = true)
-    bridge_complex_test(ℝ⁺, ℝ⁻; RR = true)
+    bridge_complex_test(ℝ⁻, ℝ⁺; RR = true)
+    bridge_complex_test(ℝ, 𝕀)
+    bridge_complex_test(𝕀, ℝ)
 end
