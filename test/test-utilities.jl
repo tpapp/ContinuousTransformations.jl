@@ -1,5 +1,5 @@
 "Test singleton type."
-@define_singleton TestSingleton <: Real
+ContinuousTransformations.@define_singleton TestSingleton <: Real
 
 @testset "define singleton" begin
     
