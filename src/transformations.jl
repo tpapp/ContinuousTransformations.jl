@@ -272,7 +272,8 @@ Multiply{T <: Real}(α::T) = Affine{T}(α, zero(T))
 
 Shift{T <: Real}(β::T) = Affine{T}(one(T), β)
 
-show(io::IO, a::Affine) = print(io, isidentity(a) ? "x ↦ x" : "x ↦ $(a.α)⋅x + $(a.β)")
+show(io::IO, a::Affine) = print(io, isidentity(a) ?
+                                "x ↦ x" : "x ↦ $(a.α)⋅x + $(a.β)")
 
 @univariate_transformation_definitions Affine(x) begin
     domain = ℝ
