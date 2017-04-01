@@ -36,7 +36,7 @@ macro define_isapprox(T, fields...)
                  :(isapprox(x.$(field), y.$(field); rtol=rtol, atol=atol))
                  for field in fields)
     quote
-        function Base.isapprox(x::$T, y::$T; rtol::Real=sqrt(eps), atol::Real=0)
+        function Base.isapprox(x::$T, y::$T; rtol::Real=√eps(), atol::Real=0)
             $(body)
         end
     end

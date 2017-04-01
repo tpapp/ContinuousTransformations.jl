@@ -15,6 +15,14 @@ end
     @test sprint(show, ℝ) == "ℝ"
 end
 
+@testset "interval isapprox" begin
+    @test ℝ ≈ ℝ
+    @test !(ℝ ≈ 𝕀)
+    @test !(ℝ ≈ ℝ⁺)
+    @test !(ℝ ≈ ℝ⁻)
+    @test 1..∞ ≈ (1+eps())..∞
+end
+
 @testset "intervals basics" begin
     seg = 1.0..2.0
     posray = 0.0..∞

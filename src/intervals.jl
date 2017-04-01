@@ -8,7 +8,8 @@ export
     Segment, 𝕀, width,
     Interval, ..
 
-import Base: in, show, middle, linspace, intersect, extrema, isfinite, isinf
+import Base: in, show, middle, linspace, intersect, extrema, isfinite, isinf,
+    isapprox
 
 abstract AbstractInterval
 
@@ -24,9 +25,13 @@ end
 
 isinf(x::AbstractInterval) = !isfinite(x)
 
+isapprox(::AbstractInterval, ::AbstractInterval; rtol=√eps(), atol=0) = false
+
 "The real line [-∞,∞]."
 immutable RealLine <: AbstractInterval
 end
+
+isapprox(::RealLine, ::RealLine; rtol=√eps(), atol=0) = true
 
 show(io::IO, ::RealLine) = print(io, "ℝ")
 
@@ -61,6 +66,8 @@ isfinite(::PositiveRay) = false
 
 const ℝ⁺ = PositiveRay(0.0)
 
+@define_isapprox PositiveRay left
+
 """
 The interval (-∞,right).
 """
@@ -81,6 +88,8 @@ extrema(ray::NegativeRay) = -∞, ray.right
 isfinite(::NegativeRay) = false
 
 const ℝ⁻ = NegativeRay(0.0)
+
+@define_isapprox NegativeRay right
 
 """
 The interval [a,b], with a < b enforced.
@@ -104,6 +113,8 @@ in(x::Real, s::Segment) = s.left ≤ x ≤ s.right
 extrema(s::Segment) = s.left, s.right
 
 isfinite(::Segment) = true
+
+@define_isapprox Segment left right
 
 width(s::Segment) = s.right - s.left
 
