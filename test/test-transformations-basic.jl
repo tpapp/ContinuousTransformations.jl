@@ -4,6 +4,11 @@
     @test right ≈ LOGISTIC(10.0)
 end
 
+@testset "Univariate transformation constructors" begin
+    @test Affine(1, 2.0) == Affine(1.0, 2.0) # promotion
+    @test Shift(2.0) == Affine(1.0, 2.0)
+end
+
 @testset "Univariate transformations" begin
     test_univariate(LOGIT, AD_exceptions = logit_exceptions())
     test_univariate(LOGISTIC, AD_exceptions = logistic_exceptions())
