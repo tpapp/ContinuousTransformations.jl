@@ -11,7 +11,7 @@ export
 import Base: in, show, middle, linspace, intersect, extrema, isfinite, isinf,
     isapprox
 
-abstract AbstractInterval
+abstract type AbstractInterval end
 
 function show(io::IO, x::AbstractInterval)
     _show_point(x) = isinf(x) ? print(io, x == Inf ? "∞" : "-∞") : show(io, x)
@@ -28,8 +28,7 @@ isinf(x::AbstractInterval) = !isfinite(x)
 isapprox(::AbstractInterval, ::AbstractInterval; rtol=√eps(), atol=0) = false
 
 "The real line [-∞,∞]."
-immutable RealLine <: AbstractInterval
-end
+struct RealLine <: AbstractInterval end
 
 isapprox(::RealLine, ::RealLine; rtol=√eps(), atol=0) = true
 
@@ -48,9 +47,9 @@ isfinite(::RealLine) = false
 """
 The interval [left,∞).
 """
-@auto_hash_equals immutable PositiveRay{T <: Real} <: AbstractInterval
+@auto_hash_equals struct PositiveRay{T <: Real} <: AbstractInterval
     left::T
-    function PositiveRay(left)
+    function PositiveRay{T}(left::T) where T
         @argcheck isfinite(left) "Need finite endpoint."
         new(left)
     end
@@ -71,9 +70,9 @@ const ℝ⁺ = PositiveRay(0.0)
 """
 The interval (-∞,right).
 """
-@auto_hash_equals immutable NegativeRay{T <: Real} <: AbstractInterval
+@auto_hash_equals struct NegativeRay{T <: Real} <: AbstractInterval
     right::T
-    function NegativeRay(right)
+    function NegativeRay{T}(right::T) where T
         @argcheck isfinite(right) "Need finite endpoint."
         new(right)
     end
@@ -94,10 +93,10 @@ const ℝ⁻ = NegativeRay(0.0)
 """
 The interval [a,b], with a < b enforced.
 """
-@auto_hash_equals immutable Segment{T <: Real} <: AbstractInterval
+@auto_hash_equals struct Segment{T <: Real} <: AbstractInterval
     left::T
     right::T
-    function Segment(left, right)
+    function Segment{T}(left::T, right::T) where T
         @argcheck isfinite(left) && isfinite(right) "Need finite endpoints."
         @argcheck left < right "Need strictly increasing endpoints."
         new(left, right)

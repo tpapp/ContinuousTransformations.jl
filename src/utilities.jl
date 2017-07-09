@@ -53,7 +53,7 @@ macro define_singleton(name_and_supertype, constant = nothing)
         constant = Symbol(uppercase(string(name)))
     end
     quote
-        Core.@__doc__ immutable $(esc(name)) <: $(esc(supertype)) end
+        Core.@__doc__ struct $(esc(name)) <: $(esc(supertype)) end
         Core.@__doc__ const $(esc(constant)) = $(esc(name))()
     end
 end

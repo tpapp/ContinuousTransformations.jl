@@ -3,10 +3,8 @@ using MacroTools
 using Parameters
 using StatsFuns
 
-import Base: inv, show
+import Base: inv, show, ∘
 import Base.Math.JuliaLibm.log1p # more accurate variant, for REALCIRCLE logjac
-
-import Compat: ∘                # replace with Base in 0.6
 
 export                     # only export constants for singleton types
     # general
@@ -40,7 +38,7 @@ export                     # only export constants for singleton types
 Univariate monotone transformation, either increasing or decreasing on
 the whole domain.
 """
-abstract UnivariateTransformation <: Function
+abstract type UnivariateTransformation <: Function end
 
 """
 Return the domain of the transformation.
@@ -89,6 +87,8 @@ Forms that are generated are documented in the function source.
 """
 macro univariate_transformation_definitions(Tx, keys_and_values)
     @capture Tx T_(x_)
+    T = esc(T)
+    x = esc(x)
     dict = block_key_value_dict(keys_and_values)
     forms = []
     ff = esc(:f)
@@ -154,8 +154,8 @@ Calculate the odds ratio x/(1-x), check for domain.
 For internal use. Contains workaround for
 https://github.com/dpsanders/ValidatedNumerics.jl/issues/249
 """
-@inline function _oddsratio{T <: Real}(x::T)
-    @argcheck zero(T) ≤ x ≤ one(T) DomainError()
+@inline function _oddsratio(x::T) where {T <: Real}
+    @argcheck (zero(T) ≤ x ≤ one(T)) DomainError()
     x / (one(x)-x)
 end
 
@@ -278,10 +278,10 @@ end
 """
 Transform ℝ to itself using ``y = α⋅x + β``.
 """
-@auto_hash_equals immutable Affine{T <: Real} <: UnivariateTransformation
+@auto_hash_equals struct Affine{T <: Real} <: UnivariateTransformation
     α::T
     β::T
-    function Affine(α, β)
+    function Affine{T}(α::T, β::T) where T
         @argcheck α ≠ zero(T) DomainError()
         new(α, β)
     end
@@ -321,9 +321,9 @@ end
 isidentity{T}(a::Affine{T}) = a.α == one(T) && a.β == zero(T)
 
 "Transform ℝ⁺ to itself using `y = x^γ`."
-@auto_hash_equals immutable Power{T <: Real} <: UnivariateTransformation
+@auto_hash_equals struct Power{T <: Real} <: UnivariateTransformation
     γ::T
-    function Power(γ)
+    function Power{T}(γ::T) where T
         @assert γ ≠ zero(γ)
         new(γ)
     end
@@ -366,9 +366,9 @@ inv(p::Power) = Power(1/p.γ)
 Compose two univariate transformations. Use the `∘` operator for
 construction.
 """
-immutable ComposedTransformation{Tf <: UnivariateTransformation,
-                                 Tg <: UnivariateTransformation} <:
-                                     UnivariateTransformation
+struct ComposedTransformation{Tf <: UnivariateTransformation,
+                              Tg <: UnivariateTransformation} <:
+                                  UnivariateTransformation
     f::Tf
     g::Tg
 end

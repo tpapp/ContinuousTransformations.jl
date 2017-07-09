@@ -1,8 +1,6 @@
 using ContinuousTransformations
 using ArgCheck
 using Base.Test
-import Compat: ∘
-
 include("utilities.jl")
 
 include("test-utilities.jl")
