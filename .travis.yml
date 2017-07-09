@@ -8,10 +8,10 @@ julia:
 #  - nightly
 notifications:
   email: false
-# getting latest master of ForwardDiff
+# getting latest master of ArgCheck
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia -e 'Pkg.clone(pwd()); Pkg.add("ForwardDiff"); Pkg.checkout("ForwardDiff"); Pkg.build("ContinuousTransformations"); Pkg.test("ContinuousTransformations"; coverage=true)'
+  - julia -e 'Pkg.clone(pwd()); Pkg.add("ArgCheck"); Pkg.checkout("ArgCheck"); Pkg.build("ContinuousTransformations"); Pkg.test("ContinuousTransformations"; coverage=true)'
 after_success:
   # push coverage results to Coveralls
   - julia -e 'cd(Pkg.dir("ContinuousTransformations")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
