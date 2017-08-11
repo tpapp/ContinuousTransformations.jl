@@ -122,7 +122,7 @@ middle(s::Segment) = middle(s.left, s.right)
 linspace(s::Segment, n = 50) = linspace(s.left, s.right, n)
 
 "Unit interval."
-𝕀 = Segment(0.0, 1.0)
+const 𝕀 = Segment(0.0, 1.0)
 
 """
 Create a RealLine, Segment, or Ray, depending on the arguments.

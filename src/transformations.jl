@@ -64,7 +64,7 @@ function isincreasing end
 
 """
 Test whether the transformation is the identity. May not idenfity all
-identity transformations.
+identity transformations. Mostly useful for printing.
 """
 isidentity(::UnivariateTransformation) = false
 
@@ -413,17 +413,7 @@ isincreasing(c::ComposedTransformation) = isincreasing(c.f) == isincreasing(c.g)
 
 inv(c::ComposedTransformation) = ComposedTransformation(inv(c.g), inv(c.f))
 
-function ∘(f::UnivariateTransformation, g::UnivariateTransformation)
-    if isidentity(f)
-        g
-    elseif isidentity(g)
-        f
-    elseif f == inv(g)
-        Affine(1.0,0.0)
-    else
-        ComposedTransformation(f, g)
-    end
-end
+∘(f::UnivariateTransformation, g::UnivariateTransformation) = ComposedTransformation(f, g)
 
 ∘(f::Affine, g::Affine) = Affine(f.α*g.α, fma(f.α, g.β, f.β))
 
@@ -445,7 +435,6 @@ end
 function bridge(dom::AbstractInterval, mapping::UnivariateTransformation)
     mapping ∘ bridge(dom, domain(mapping))
 end
-
 
 function bridge{Tdom,Timg}(dom::Tdom, img::Timg)
     throw(ArgumentError("Can't bridge a $(Tdom) to a $(Timg) without a transformation."))

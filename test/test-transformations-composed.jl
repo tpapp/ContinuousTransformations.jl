@@ -34,8 +34,10 @@ When `RR`, domain and image of the actual transformation will be infinite.
 """
 function bridge_complex_test(dom, img; mapping = nothing, RR = false)
     t = if mapping == nothing
+        @inferred bridge(dom, img)
         bridge(dom, img)
     else
+        # @inferred bridge(dom, mapping, img) BROKEN
         bridge(dom, mapping, img)
     end
     @test domain(t) == (RR ? ℝ : dom)
