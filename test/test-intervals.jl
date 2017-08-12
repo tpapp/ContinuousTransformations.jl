@@ -1,18 +1,12 @@
-@testset "interval constructors" begin
-    @test PositiveRay(1.0) == 1.0..∞
-    @test NegativeRay(2.0) == -∞..2.0
-    @test RealLine() == ℝ == -∞..∞
-    @test_throws ArgumentError NaN..NaN
-    @test_throws ArgumentError ∞..(-∞)
-    @test_throws ArgumentError 2..(-1)
-    @test isa(1..2.0, Segment{Float64})
-end
-
-@testset "interval printing" begin
-    @test sprint(show, 1.0..2.0) == "(1.0..2.0)"
-    @test sprint(show, 1.0..∞) == "(1.0..∞)"
-    @test sprint(show, -∞..2.0) == "(-∞..2.0)"
-    @test sprint(show, ℝ) == "ℝ"
+@testset "interval constructors and equality" begin
+    @test PositiveRay(1.0) == PositiveRay(1.0)
+    @test NegativeRay(2.0) == NegativeRay(2.0)
+    @test RealLine() == ℝ
+    @test_throws ArgumentError Segment(NaN, NaN)
+    @test_throws ArgumentError Segment(-Inf, Inf)
+    @test_throws ArgumentError Segment(2, -1)
+    @test_throws ArgumentError Segment(2, 2)
+    @test isa(Segment(1,2.0), Segment{Float64})
 end
 
 @testset "interval isapprox" begin
@@ -20,13 +14,13 @@ end
     @test !(ℝ ≈ 𝕀)
     @test !(ℝ ≈ ℝ⁺)
     @test !(ℝ ≈ ℝ⁻)
-    @test 1..∞ ≈ (1+eps())..∞
+    @test PositiveRay(1) ≈ PositiveRay(1+eps())
 end
 
 @testset "intervals basics" begin
-    seg = 1.0..2.0
-    posray = 0.0..∞
-    negray = -∞..1.5
+    seg = Segment(1.0, 2.0)
+    posray = PositiveRay(0.0)
+    negray = NegativeRay(1.5)
     # numbers in seg
     @test 1.0 ∈ seg
     @test 1.5 ∈ seg
@@ -58,9 +52,9 @@ end
     @test -∞ ∈ ℝ
     @test_throws MethodError "string" ∈ ℝ
     # special intervals
-    @test 𝕀== 0.0..1.0
-    @test ℝ⁺ == 0.0..∞
-    @test ℝ⁻ == -∞..0.0
+    @test 𝕀== Segment(0.0, 1.0)
+    @test ℝ⁺ == PositiveRay(0.0)
+    @test ℝ⁻ == NegativeRay(0.0)
     # finiteness
     @test isfinite(seg) && !isinf(seg)
     @test !isfinite(posray) && isinf(posray)
@@ -70,9 +64,9 @@ end
 end
 
 @testset "intervals intersections" begin
-    seg = 1.0..2.0
-    posray = 0.0..∞
-    negray = -∞..1.5
+    seg = Segment(1.0, 2.0)
+    posray = PositiveRay(0.0)
+    negray = NegativeRay(1.5)
     # intersections with ℝ
     @test seg ∩ ℝ == seg
     @test ℝ ∩ seg == seg
@@ -86,14 +80,14 @@ end
     @test_throws Exception posray ∩ ℝ⁻
     @test_throws Exception ℝ⁻ ∩ seg
     # non-empty intersections
-    let seg2 = 1.5..3.0
-        @test seg ∩ seg2 == seg2 ∩ seg == 1.5..2.00
+    let seg2 = Segment(1.5, 3.0)
+        @test seg ∩ seg2 == seg2 ∩ seg == Segment(1.5, 2.0)
     end
     @test seg ∩ posray == posray ∩ seg == seg
-    @test seg ∩ negray == negray ∩ seg == 1.0..1.5
-    @test negray ∩ posray == posray ∩ negray == 0.0..1.5
-    @test posray ∩ (2..∞) == 2..∞
-    @test posray ∩ (-2..∞) == posray
-    @test negray ∩ (-∞..(-7)) == -∞..(-7)
-    @test negray ∩ (-∞..7) == negray
+    @test seg ∩ negray == negray ∩ seg == Segment(1.0, 1.5)
+    @test negray ∩ posray == posray ∩ negray == Segment(0.0, 1.5)
+    @test posray ∩ PositiveRay(2) == PositiveRay(2)
+    @test posray ∩ PositiveRay(-2) == posray
+    @test negray ∩ NegativeRay(-7) == NegativeRay(-7)
+    @test negray ∩ NegativeRay(7) == negray
 end

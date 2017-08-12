@@ -25,30 +25,12 @@ export                     # only export constants for singleton types
     bridge
 
 
-"The log of the determinant of the Jacobian as the second argument."
-@define_singleton LogJac <: Any
-
-"The log of the determinant of the Jacobian as the second argument."
-@define_singleton Jac <: Any
-
-"The derivative (Jacobian) as the second argument."
-@define_singleton Deriv <: Any
-
-"""
-Univariate monotone transformation, either increasing or decreasing on
-the whole domain.
-"""
-abstract type UnivariateTransformation <: Function end
 
 """
 Return the domain of the transformation.
 """
 function domain end
 
-"""
-Return the image of the transformation.
-"""
-function image end
 
 """
 Return the largest interval in the domain of `f` such that its image is in `img`.
@@ -57,10 +39,6 @@ function domain_in_image(f::UnivariateTransformation, img::AbstractInterval)
     inv(f)(img ∩ image(f))
 end
 
-"""
-Test whether the transformation is monotone increasing.
-"""
-function isincreasing end
 
 """
 Test whether the transformation is the identity. May not idenfity all
@@ -275,25 +253,7 @@ end
     show = "x ↦ log(x)"
 end
 
-"""
-Transform ℝ to itself using ``y = α⋅x + β``.
-"""
-@auto_hash_equals struct Affine{T <: Real} <: UnivariateTransformation
-    α::T
-    β::T
-    function Affine{T}(α::T, β::T) where T
-        @argcheck α ≠ zero(T) DomainError()
-        new(α, β)
-    end
-end
 
-Affine{T}(α::T, β::T) = Affine{T}(α, β)
-
-Affine(α, β) = Affine(promote(α, β)...)
-
-Multiply{T <: Real}(α::T) = Affine{T}(α, zero(T))
-
-Shift{T <: Real}(β::T) = Affine{T}(one(T), β)
 
 show(io::IO, a::Affine) = print(io, isidentity(a) ?
                                 "x ↦ x" : "x ↦ $(a.α)⋅x + $(a.β)")
@@ -303,15 +263,6 @@ show(io::IO, a::Affine) = print(io, isidentity(a) ?
     image = ℝ
 end
 
-(a::Affine)(x) = fma(x, a.α, a.β)
-
-isincreasing{T}(a::Affine{T}) = a.α > zero(T)
-
-(a::Affine)(x, ::Deriv) = a(x), a.α
-
-(a::Affine)(x, ::Jac) = a(x), abs(a.α)
-
-(a::Affine)(x, ::LogJac) = a(x), log(abs(a.α))
 
 function inv{T}(a::Affine{T})
     @unpack α, β = a
