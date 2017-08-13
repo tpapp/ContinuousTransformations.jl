@@ -391,9 +391,9 @@ affine_bridge(::RealLine, ::RealLine) = Affine(1, 0)
 affine_bridge(x::PositiveRay, y::PositiveRay) = Affine(1, y.left - x.left)
 affine_bridge(x::NegativeRay, y::NegativeRay) = Affine(1, y.right - x.right)
 affine_bridge(x::PositiveRay, y::NegativeRay) =
-    Affine(1, y.right + x.left) ∘ Negation
+    Affine(1, y.right + x.left) ∘ NEGATION
 affine_bridge(x::NegativeRay, y::PositiveRay) =
-    Affine(1, y.left - x.right) ∘ Negation
+    Affine(1, y.left - x.right) ∘ NEGATION
 
 default_transformation(::Segment) = REALCIRCLE
 default_transformation(::PositiveRay) = EXP
