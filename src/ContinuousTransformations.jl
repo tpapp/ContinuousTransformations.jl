@@ -9,7 +9,9 @@ using StatsFuns
 export
     AbstractInterval, RealLine, ℝ, PositiveRay, ℝ⁺, NegativeRay, ℝ⁻,
     Segment, width,
-    image, isincreasing, Affine, Negation, Logistic, RealCircle, Exp,
+    UnivariateTransformation, image, isincreasing, INV, LOGJAC,
+    Affine,
+    Negation, NEGATION, Logistic, LOGISTIC, RealCircle, REALCIRCLE, Exp, EXP,
     affine_bridge, default_transformation, transformation_to
     
 import Base:
