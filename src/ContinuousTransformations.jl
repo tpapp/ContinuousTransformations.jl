@@ -358,17 +358,19 @@ function show(io::IO, c::ComposedTransformation)
     show(io, c.g)
 end
 
-function (c::ComposedTransformation)(x, ::LogJac)
-    y, log_g′x = c.g(x, LOGJAC)
-    fy, log_f′y = c.f(y, LOGJAC)
-    fy, log_f′y + log_g′x
+function (t::ComposedTransformation)(x, ::LogJac)
+    @unpack f, g = t 
+    y = g(x)
+    log_g′x = g(x, LOGJAC)
+    log_f′y = f(y, LOGJAC)
+    log_f′y + log_g′x
 end
 
 image(t::ComposedTransformation) = t.f(image(t.g))
 
 isincreasing(c::ComposedTransformation) = isincreasing(c.f) == isincreasing(c.g)
 
-(t::ComposedTransformation)(x, ::Inv) = g(x, f(x, INV), INV)
+(t::ComposedTransformation)(x, ::Inv) = t.g(t.f(x, INV), INV)
 
 ∘(f::UnivariateTransformation, g::UnivariateTransformation) = ComposedTransformation(f, g)
 
