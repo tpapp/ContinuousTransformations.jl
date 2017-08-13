@@ -16,7 +16,7 @@ export
     
 import Base:
     in, length, size, ∘,
-    middle, linspace, intersect, extrema, isfinite, isinf, isapprox
+    middle, linspace, intersect, extrema, minimum, maximum, isfinite, isinf, isapprox
     
 
 ######################################################################
@@ -66,6 +66,8 @@ isinf(x::AbstractInterval) = !isfinite(x)
 
 isapprox(::AbstractInterval, ::AbstractInterval; rtol=√eps(), atol=0) = false
 
+extrema(x::AbstractInterval) = minimum(x), maximum(x)
+
 """
     RealLine()
 
@@ -81,7 +83,8 @@ const ℝ = RealLine()
 
 in(x::Real, ::RealLine) = true
 
-extrema(::RealLine) = -Inf, Inf
+minimum(::RealLine) = -Inf
+maximum(::RealLine) = Inf
 
 isfinite(::RealLine) = false
 
@@ -101,9 +104,8 @@ end
 PositiveRay{T}(left::T) = PositiveRay{T}(left)
 
 in(x::Real, ray::PositiveRay) = ray.left ≤ x
-
-extrema(ray::PositiveRay) = ray.left, Inf
-
+minimum(ray::PositiveRay) = ray.left
+maximum(::PositiveRay) = Inf
 isfinite(::PositiveRay) = false
 
 const ℝ⁺ = PositiveRay(0.0)
@@ -126,9 +128,8 @@ end
 NegativeRay{T}(right::T) = NegativeRay{T}(right)
 
 in(x::Real, ray::NegativeRay) = x ≤ ray.right
-
-extrema(ray::NegativeRay) = -Inf, ray.right
-
+minimum(::NegativeRay) = -Inf
+maximum(ray::NegativeRay) = ray.right
 isfinite(::NegativeRay) = false
 
 const ℝ⁻ = NegativeRay(0.0)
@@ -155,17 +156,14 @@ Segment{T <: Real}(left::T, right::T) = Segment{T}(left, right)
 Segment(left::Real, right::Real) = Segment(promote(left, right)...)
 
 in(x::Real, s::Segment) = s.left ≤ x ≤ s.right
-
-extrema(s::Segment) = s.left, s.right
-
+minimum(s::Segment) = s.left
+maximum(s::Segment) = s.right
 isfinite(::Segment) = true
 
 @define_isapprox Segment left right
 
 width(s::Segment) = s.right - s.left
-
 middle(s::Segment) = middle(s.left, s.right)
-
 linspace(s::Segment, n = 50) = linspace(s.left, s.right, n)
 
 
