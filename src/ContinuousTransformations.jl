@@ -12,7 +12,8 @@ export
     UnivariateTransformation, image, isincreasing, INV, LOGJAC,
     Affine,
     Negation, NEGATION, Logistic, LOGISTIC, RealCircle, REALCIRCLE, Exp, EXP,
-    affine_bridge, default_transformation, transformation_to
+    affine_bridge, default_transformation, transformation_to,
+    VectorTransformation
     
 import Base:
     in, length, size, ∘,

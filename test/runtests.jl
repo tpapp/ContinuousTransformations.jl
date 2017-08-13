@@ -284,3 +284,27 @@ end
     test_transformation_to(PositiveRay(9.0))
     test_transformation_to(NegativeRay(-7.0))
 end
+
+function test_vector_transformation(transformations; N = 500)
+    t = VectorTransformation(transformations)
+    @test image(t) == image.(transformations)
+    @test length(t) == length(transformations)
+    @test size(t) == (length(t), )
+    L = length(t)
+    for _ in 1:N
+        x = randn(L)
+        y = map((t,x) -> t(x), transformations, x)
+        @inferred t(x)
+        @test t(x) == y
+        # @inferred t(x, LOGJAC)
+        @test t(x, LOGJAC) == sum(map((t,x) -> t(x, LOGJAC), transformations, x))
+        # @inferred t(y, INV)
+        @test t(y, INV) == map((t,y) -> t(y, INV), transformations, y)
+    end
+end
+
+@testset "vector transformation" begin
+    test_vector_transformation(transformation_to.((Segment(0,1), ℝ,
+                                                   PositiveRay(2), NegativeRay(-9.0)));
+                               N = 1)
+end
