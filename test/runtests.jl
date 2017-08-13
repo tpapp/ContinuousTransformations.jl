@@ -223,11 +223,14 @@ Test univariate transformation `f` with `x`. Tests for:
 `forwarddiff_exceptions` is a dictionary handling exceptions that ForwardDiff cannot cope with at the moment. See [this discussion](https://github.com/JuliaDiff/ForwardDiff.jl/issues/209).
 """
 function test_univariate(t::UnivariateTransformation, x; AD_exceptions = Dict())
+    @test length(t) == 1
+    @test size(t) == ()
     @inferred t(x)
     y = t(x)
     @test y ∈ image(t)
+    @inferred t(y, INV)
     @test t(y, INV) ≈ x
-    logjac = t(x, LOGJAC)
+    logjac = @inferred t(x, LOGJAC)
     deriv = get(AD_exceptions, x, derivative(t, x))
     @test logjac ≈ log(abs(deriv))
 end
