@@ -8,11 +8,13 @@ using StatsFuns
 
 export
     AbstractInterval, RealLine, ℝ, PositiveRay, ℝ⁺, NegativeRay, ℝ⁻,
-    Segment, 𝕀, width,
+    Segment, width,
     image, isincreasing, Affine, Negation, Logistic, RealCircle, Exp,
     affine_bridge, default_transformation, transformation_to
     
-import Base: in, middle, linspace, intersect, extrema, isfinite, isinf, isapprox, ∘
+import Base:
+    in, length, size, ∘,
+    middle, linspace, intersect, extrema, isfinite, isinf, isapprox
     
 
 ######################################################################
@@ -51,6 +53,7 @@ macro define_singleton(name_and_supertype, constant = nothing)
     end
 end
 
+
 ######################################################################
 # intervals
 ######################################################################
@@ -76,7 +79,7 @@ const ℝ = RealLine()
 
 in(x::Real, ::RealLine) = true
 
-extrema(::RealLine) = -∞, ∞
+extrema(::RealLine) = -Inf, Inf
 
 isfinite(::RealLine) = false
 
@@ -97,7 +100,7 @@ PositiveRay{T}(left::T) = PositiveRay{T}(left)
 
 in(x::Real, ray::PositiveRay) = ray.left ≤ x
 
-extrema(ray::PositiveRay) = ray.left, ∞
+extrema(ray::PositiveRay) = ray.left, Inf
 
 isfinite(::PositiveRay) = false
 
@@ -122,7 +125,7 @@ NegativeRay{T}(right::T) = NegativeRay{T}(right)
 
 in(x::Real, ray::NegativeRay) = x ≤ ray.right
 
-extrema(ray::NegativeRay) = -∞, ray.right
+extrema(ray::NegativeRay) = -Inf, ray.right
 
 isfinite(::NegativeRay) = false
 
@@ -163,8 +166,6 @@ middle(s::Segment) = middle(s.left, s.right)
 
 linspace(s::Segment, n = 50) = linspace(s.left, s.right, n)
 
-"Unit interval."
-const 𝕀 = Segment(0.0, 1.0)
 
 ######################################################################
 # intersections
@@ -176,7 +177,11 @@ intersect(a::AbstractInterval, b::AbstractInterval) = intersect(b, a)
     
 intersect(a::RealLine, b::AbstractInterval) = b
 
-"Helper function for forming a segment when possible."
+"""
+    _maybe_segment(a, b)
+
+Helper function for forming a segment when possible. Internal, not exported.
+"""
 @inline function _maybe_segment(a, b)
     # NOTE Decided not to represent the empty interval, as it has no use in
     # the context of this package. Best to throw an error as soon as possible.
@@ -199,35 +204,55 @@ intersect(a::PositiveRay, b::NegativeRay) = _maybe_segment(a.left, b.right)
 intersect(a::NegativeRay, b::NegativeRay) = NegativeRay(min(a.right, b.right))
 
 ######################################################################
-# transformations
+# abstract interface for transformations
 ######################################################################
 
-"The log of the determinant of the Jacobian as the second argument."
+"""
+The log of the determinant of the Jacobian. Use as
+```julia
+transformation(x, LOGJAC)
+```
+"""
 @define_singleton LogJac <: Any
 
-"Inverse of the transformation."
+"Inverse of the transformation. Use as
+```julia
+transformation(x, INV)
+```"
 @define_singleton Inv <: Any
 
 """
-Univariate monotone transformation, either increasing or decreasing on
-the whole domain.
-"""
-abstract type UnivariateTransformation <: Function end
+    image(transformation)
 
-"""
 Return the image of the transformation.
 """
 function image end
 
+
+######################################################################
+# univariate transformations
+######################################################################
+
 """
-Test whether the transformation is monotone increasing.
+Univariate monotone transformation, either *increasing* or *decreasing* on the whole domain (thus, a bijection).
+"""
+abstract type UnivariateTransformation <: Function end
+
+length(::UnivariateTransformation) = 1
+
+size(::UnivariateTransformation) = ()
+
+"""
+    isincreasing(transformation)
+
+Return `true` (`false`), when the transformation is monotone increasing (decreasing).
 """
 function isincreasing end
 
 """
     Affine(α, β)
 
-Mapping ``ℝ↦ℝ`` using ``y = α⋅x + β``. `α > 0` is enforced, see `Negation`.
+Mapping ``ℝ → ℝ`` using ``x ↦ α⋅x + β``. `α > 0` is enforced, see `Negation`.
 """
 @auto_hash_equals struct Affine{T <: Real} <: UnivariateTransformation
     α::T
@@ -255,7 +280,7 @@ isincreasing(t::Affine) = true
 """
     Negation.
 
-Mapping ``ℝ↦ℝ`` using ``y = -x``.
+Mapping ``ℝ → ℝ`` using ``x ↦ -x``.
 """
 @define_singleton Negation <: UnivariateTransformation
 
@@ -273,11 +298,11 @@ isincreasing(::Negation) = false
 """
     Logistic()
 
-Mapping ``ℝ↦(0,1)`` using ``y = x/(1+x)``.
+Mapping ``ℝ → (0,1)`` using ``x ↦ x/(1+x)``.
 """
 @define_singleton Logistic <: UnivariateTransformation
 
-image(::Logistic) = 𝕀
+image(::Logistic) = Segment(0, 1)
 (t::Logistic)(x) = logistic(x)
 (t::Logistic)(x, ::LogJac) = -(log1pexp(x)+log1pexp(-x))
 (t::Logistic)(x, ::Inv) = logit(x)
@@ -286,11 +311,11 @@ isincreasing(::Logistic) = true
 """
     RealCircle()
 
-Mapping ``ℝ↦(-1,1)`` using ``y = x/√(1+x^2)``.
+Mapping ``ℝ → (-1,1)`` using ``x ↦ x/√(1+x^2)``.
 """
 @define_singleton RealCircle <: UnivariateTransformation
 
-image(::RealCircle) = Segment(-1.0, 1.0)
+image(::RealCircle) = Segment(-1, 1)
 (t::RealCircle)(x) = isinf(x) ? sign(x) : x/√(1+x^2)
 (t::RealCircle)(x, ::LogJac) = -1.5*log1psq(x)
 (t::RealCircle)(x, ::Inv) = x/√(1-x^2)
@@ -299,7 +324,7 @@ isincreasing(::RealCircle) = true
 """
     Exp()
 
-Mapping ``ℝ↦ℝ⁺`` using ``y = exp(x)``.
+Mapping ``ℝ → ℝ⁺`` using ``x ↦ exp(x)``.
 """
 @define_singleton Exp <: UnivariateTransformation
 
@@ -363,15 +388,39 @@ affine_bridge(::RealLine, ::RealLine) = Affine(1, 0)
 
 affine_bridge(x::PositiveRay, y::PositiveRay) = Affine(1, y.left - x.left)
 affine_bridge(x::NegativeRay, y::NegativeRay) = Affine(1, y.right - x.right)
-affine_bridge(x::PositiveRay, y::NegativeRay) = Affine(1, y.right + x.left) ∘ Negation
-affine_bridge(x::NegativeRay, y::PositiveRay) = Affine(1, y.left - x.right) ∘ Negation
+affine_bridge(x::PositiveRay, y::NegativeRay) =
+    Affine(1, y.right + x.left) ∘ Negation
+affine_bridge(x::NegativeRay, y::PositiveRay) =
+    Affine(1, y.left - x.right) ∘ Negation
 
 default_transformation(::Segment) = REALCIRCLE
 default_transformation(::PositiveRay) = EXP
 default_transformation(::NegativeRay) = EXP
 default_transformation(::RealLine) = Affine(1, 0)
 
-transformation_to(y, transformation = default_transformation(y)) = 
-    affine_bridge(image(transformation), y) ∘ transformation
+"""
+    transformation_to(y, [transformation])
+
+Return a transformation that maps ℝ (or ℝⁿ when applicable) to `y`. The second argument may be used to specify a particular transformation, otherwise `default_transformation` is used.
+"""
+transformation_to(y::AbstractInterval,
+                  transformation = default_transformation(y)) = 
+                      affine_bridge(image(transformation), y) ∘ transformation
+
+######################################################################
+# vector transformations
+######################################################################
+
+struct VectorTransformation{T}
+    transformations::T
+end
+
+image(t::VectorTransformation) = image.(t.transformations)
+(t::VectorTransformation)(x) = map((t,x)->t(x), t.transformations, x)
+(t::VectorTransformation)(x, ::LogJac) =
+    sum(t(x, LOGJAC) for (t,x) in zip(t.transformations, x))
+(t::VectorTransformation)(x, ::Inv) = map((t,x)->t(x, INV), t.transformations, x)
+length(t::VectorTransformation) = sum(length(t) for t in t.transformations)
+size(t::VectorTransformation) = (length(t), )
 
 end # module
