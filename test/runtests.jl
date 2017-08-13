@@ -248,5 +248,39 @@ const logistic_AD_exceptions = Dict(-Inf => 0.0)
     test_univariate_random(EXP)
 end
 
+random_segment() = Segment(sort(randn(2))...)
 
+function test_affine_bridge(x, y)
+    x1, x2 = extrema(x)
+    y1, y2 = extrema(y)
+    a = affine_bridge(x, y)
+    if !isincreasing(a)
+        y2, y1 = y1, y2
+    end
+    @test a(x1) ≈ y1
+    @test a(x2) ≈ y2
+    @test a(x) ≈ y
+end
 
+@testset "affine bridge" begin
+    test_affine_bridge(ℝ, ℝ)
+    for _ in 1:100
+        test_affine_bridge(random_segment(), random_segment())
+        test_affine_bridge(PositiveRay(randn()), PositiveRay(randn()))
+        test_affine_bridge(NegativeRay(randn()), NegativeRay(randn()))
+        test_affine_bridge(PositiveRay(randn()), NegativeRay(randn()))
+    end
+end
+
+function test_transformation_to(y)
+    @inferred transformation_to(y)
+    t = transformation_to(y)
+    @test image(t) == y
+    test_univariate_random(t)
+end
+
+@testset "transformations to an interval" begin
+    test_transformation_to(Segment(1, 2))
+    test_transformation_to(PositiveRay(9.0))
+    test_transformation_to(NegativeRay(-7.0))
+end
