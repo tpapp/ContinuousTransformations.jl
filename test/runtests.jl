@@ -1,5 +1,4 @@
 using ContinuousTransformations
-using ArgCheck
 using Base.Test
 import ForwardDiff: derivative
 
@@ -288,22 +287,46 @@ end
     test_transformation_to(NegativeRay(-7.0))
 end
 
-function test_vector_transformation(transformations; N = 500)
-    t = VectorTransformation(transformations)
-    @test image(t) == image.(transformations)
-    @test length(t) == length(transformations)
-    @test size(t) == (length(t), )
-    L = length(t)
-    for _ in 1:N
-        x = randn(L)
-        y = map((t,x) -> t(x), transformations, x)
-        @inferred t(x)
-        @test t(x) == y
-        # @inferred t(x, LOGJAC)
-        @test t(x, LOGJAC) == sum(map((t,x) -> t(x, LOGJAC), transformations, x))
-        # @inferred t(y, INV)
-        @test t(y, INV) == map((t,y) -> t(y, INV), transformations, y)
+"""
+    rand_Inf!(x, [p])
+
+Replace each element of `x` with Inf or -Inf (equal probability), total with IID probability `p`.
+"""
+function rand_Inf!(x, p = 0.02)
+    for i in 1:length(x)
+        a = rand()
+        a < p && (x[i] = Inf)
+        rand() < 0.5 && (x[i] *= -1)
     end
+end
+
+function test_array_transformation(t, dims; N = 500)
+    at = ArrayTransformation(t, dims)
+    @test image(at) == fill(image(t), dims)
+    @test length(at) == prod(dims)
+    @test size(at) == dims
+    @test_throws DimensionMismatch at(ones(dims .+ 1))
+    @test_throws DimensionMismatch logjac(at, ones(dims .+ 1))
+    for _ in 1:N
+        x = randn(dims)
+        rand_Inf!(x)
+        y = t.(x)
+        @inferred at(x)
+        @test at(x) == y
+        @inferred logjac(at, x)
+        @test logjac(at, x) == logjac.(t, x)
+        @inferred inverse(at, y)
+        @test inverse(at, y) == inverse.(t, y)
+    end
+end
+
+@testset "array transformations" begin
+    test_array_transformation(transformation_to.(Segment(1,2)), (2,3))
+    test_array_transformation(transformation_to.(ℝ), (4,5))
+    test_array_transformation(EXP, (3,7,2))
+    test_array_transformation(REALCIRCLE, (3,2))
+    @test_throws ArgumentError ArrayTransformation(EXP, -1, 2)
+    @test_throws MethodError ArrayTransformation(EXP, "a fish")
 end
 
 # @testset "vector transformation" begin

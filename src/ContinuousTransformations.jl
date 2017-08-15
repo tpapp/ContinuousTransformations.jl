@@ -5,6 +5,7 @@ using AutoHashEquals
 using MacroTools
 using Parameters
 using StatsFuns
+using Lazy
 
 export
     AbstractInterval, RealLine, ℝ, PositiveRay, ℝ⁺, NegativeRay, ℝ⁻,
@@ -13,7 +14,7 @@ export
     Affine,
     Negation, NEGATION, Logistic, LOGISTIC, RealCircle, REALCIRCLE, Exp, EXP,
     affine_bridge, default_transformation, transformation_to,
-    VectorTransformation
+    ArrayTransformation
     
 import Base:
     in, length, size, ∘, show,
@@ -230,19 +231,10 @@ Return the image of the transformation.
 """
 function image end
 
-
-######################################################################
-# univariate transformations
-######################################################################
-
 """
-Univariate monotone transformation, either *increasing* or *decreasing* on the whole domain (thus, a bijection).
+Continuous bijection ℝⁿ→ℝⁿ.
 """
-abstract type UnivariateTransformation <: Function end
-
-length(::UnivariateTransformation) = 1
-
-size(::UnivariateTransformation) = ()
+abstract type ContinuousTransformation <: Function end
 
 """
     rhs_string(transformation, term)
@@ -253,10 +245,24 @@ function rhs_string end
 
 transformation_string(t, x = "x") = x * " ↦ " * rhs_string(t, x)
 
-show(io::IO, ::MIME"text/plain", t::UnivariateTransformation) =
+show(io::IO, ::MIME"text/plain", t::ContinuousTransformation) =
     println(io, transformation_string(t, "x"))
 
-show(io::IO, t::UnivariateTransformation) = print(io, transformation_string(t, "x"))
+show(io::IO, t::ContinuousTransformation) =
+    print(io, transformation_string(t, "x"))
+
+######################################################################
+# univariate transformations
+######################################################################
+
+"""
+Univariate monotone transformation, either *increasing* or *decreasing* on the whole domain (thus, a bijection).
+"""
+abstract type UnivariateTransformation <: ContinuousTransformation end
+
+length(::UnivariateTransformation) = 1
+
+size(::UnivariateTransformation) = ()
 
 """
     isincreasing(transformation)
@@ -443,9 +449,35 @@ transformation_to(y::AbstractInterval,
 # vector transformations
 ######################################################################
 
-# struct VectorTransformation{T}
-#     transformations::T
-# end
+struct ArrayTransformation{T <: UnivariateTransformation, D} <: ContinuousTransformation
+    transformation::T
+    function ArrayTransformation(transformation::T,
+                                 dims::Tuple{Vararg{Int64, N}}) where {T,N}
+        @argcheck all(dims .> 0) "Invalid dimensions."
+        new{T,dims}(transformation)
+    end
+end
+
+ArrayTransformation(transformation, dims::Int...) =
+    ArrayTransformation(transformation, dims)
+
+size(t::ArrayTransformation{T,D}) where {T,D} = D
+
+length(t::ArrayTransformation) = prod(size(t))
+
+transformation_string(t::ArrayTransformation, term) = 
+    "$(transformation_string(t.transformation, term)) for $(size(t)) elements"
+
+(t::ArrayTransformation)(x) = reshape((t.transformation).(x), size(t))
+
+logjac(t::ArrayTransformation, x) = reshape(logjac.(t.transformation, x), size(t))
+
+inverse(t::ArrayTransformation, x) =
+    reshape(inverse.(t.transformation, x), size(t))
+
+image(t::ArrayTransformation) = fill(image(t.transformation), size(t))
+
+@forward ArrayTransformation.t isincreasing
 
 # image(t::VectorTransformation) = image.(t.transformations)
 
