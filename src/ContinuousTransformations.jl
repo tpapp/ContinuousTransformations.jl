@@ -9,14 +9,14 @@ using StatsFuns
 export
     AbstractInterval, RealLine, ℝ, PositiveRay, ℝ⁺, NegativeRay, ℝ⁻,
     Segment, width,
-    UnivariateTransformation, image, isincreasing, INV, LOGJAC,
+    UnivariateTransformation, image, isincreasing, inverse, logjac,
     Affine,
     Negation, NEGATION, Logistic, LOGISTIC, RealCircle, REALCIRCLE, Exp, EXP,
     affine_bridge, default_transformation, transformation_to,
     VectorTransformation
     
 import Base:
-    in, length, size, ∘,
+    in, length, size, ∘, show,
     middle, linspace, intersect, extrema, minimum, maximum, isfinite, isinf, isapprox
     
 
@@ -106,7 +106,7 @@ PositiveRay{T}(left::T) = PositiveRay{T}(left)
 
 in(x::Real, ray::PositiveRay) = ray.left ≤ x
 minimum(ray::PositiveRay) = ray.left
-maximum(::PositiveRay) = Inf
+maximum(::PositiveRay{T}) where T = T(Inf)
 isfinite(::PositiveRay) = false
 
 const ℝ⁺ = PositiveRay(0.0)
@@ -129,7 +129,7 @@ end
 NegativeRay{T}(right::T) = NegativeRay{T}(right)
 
 in(x::Real, ray::NegativeRay) = x ≤ ray.right
-minimum(::NegativeRay) = -Inf
+minimum(::NegativeRay{T}) where T = -T(Inf)
 maximum(ray::NegativeRay) = ray.right
 isfinite(::NegativeRay) = false
 
@@ -209,18 +209,19 @@ intersect(a::NegativeRay, b::NegativeRay) = NegativeRay(min(a.right, b.right))
 ######################################################################
 
 """
-The log of the determinant of the Jacobian. Use as
-```julia
-transformation(x, LOGJAC)
+    logjac(t, x)
+
+The log of the determinant of the Jacobian of `t` at `x`.
 ```
 """
-@define_singleton LogJac <: Any
+function logjac end
 
-"Inverse of the transformation. Use as
-```julia
-transformation(x, INV)
-```"
-@define_singleton Inv <: Any
+"""
+    inverse(t, x)
+
+Return ``t⁻¹(x)``.
+"""
+function inverse end
 
 """
     image(transformation)
@@ -242,6 +243,20 @@ abstract type UnivariateTransformation <: Function end
 length(::UnivariateTransformation) = 1
 
 size(::UnivariateTransformation) = ()
+
+"""
+    rhs_string(transformation, term)
+
+Return the formula representing the hand side of the `transformation`, with `term` as the argument.
+"""
+function rhs_string end
+
+transformation_string(t, x = "x") = x * " ↦ " * rhs_string(t, x)
+
+show(io::IO, ::MIME"text/plain", t::UnivariateTransformation) =
+    println(io, transformation_string(t, "x"))
+
+show(io::IO, t::UnivariateTransformation) = print(io, transformation_string(t, "x"))
 
 """
     isincreasing(transformation)
@@ -269,14 +284,21 @@ Affine(α, β) = Affine(promote(α, β)...)
 
 image(::Affine) = ℝ
 (t::Affine)(x) = fma(x, t.α, t.β)
-(t::Affine)(x, ::LogJac) = log(abs(t.α))
-(t::Affine)(x, ::Inv) = fma(x, 1/t.α, -t.β/t.α)
+logjac(t::Affine, x) = log(abs(t.α))
+inverse(t::Affine, x) = fma(x, 1/t.α, -t.β/t.α)
 isincreasing(t::Affine) = true
 
 (t::Affine)(x::Segment) = Segment(t(x.left), t(x.right))
 (t::Affine)(x::PositiveRay) = PositiveRay(t(x.left))
 (t::Affine)(x::NegativeRay) = NegativeRay(t(x.right))
 (t::Affine)(::RealLine) = ℝ
+
+function rhs_string(t::Affine, term)
+    @unpack α, β = t
+    α == 1 || (term = "$(α)⋅" * term)
+    β == 0 || (term = term * " + $(β)")
+    term
+end
 
 """
     Negation.
@@ -286,15 +308,17 @@ Mapping ``ℝ → ℝ`` using ``x ↦ -x``.
 @define_singleton Negation <: UnivariateTransformation
 
 image(::Negation) = ℝ
-(t::Negation)(x) = -x
-(t::Negation)(x, ::LogJac) = zero(x)
-(t::Negation)(x, ::Inv) = -x
+(::Negation)(x) = -x
+logjac(::Negation, x) = zero(x)
+inverse(::Negation, x) = -x
 isincreasing(::Negation) = false
 
 (::Negation)(x::Segment) = Segment(-x.right, -x.left)
 (::Negation)(x::PositiveRay) = NegativeRay(-x.left)
 (::Negation)(x::NegativeRay) = PositiveRay(-x.right)
 (::Negation)(::RealLine) = ℝ
+
+rhs_string(::Negation, term) = "-" * term
 
 """
     Logistic()
@@ -305,9 +329,11 @@ Mapping ``ℝ → (0,1)`` using ``x ↦ x/(1+x)``.
 
 image(::Logistic) = Segment(0, 1)
 (t::Logistic)(x) = logistic(x)
-(t::Logistic)(x, ::LogJac) = -(log1pexp(x)+log1pexp(-x))
-(t::Logistic)(x, ::Inv) = logit(x)
+logjac(::Logistic, x) = -(log1pexp(x)+log1pexp(-x))
+inverse(::Logistic, x) = logit(x)
 isincreasing(::Logistic) = true
+
+rhs_string(::Logistic) = "logistic($term)"
 
 """
     RealCircle()
@@ -318,9 +344,11 @@ Mapping ``ℝ → (-1,1)`` using ``x ↦ x/√(1+x^2)``.
 
 image(::RealCircle) = Segment(-1, 1)
 (t::RealCircle)(x) = isinf(x) ? sign(x) : x/√(1+x^2)
-(t::RealCircle)(x, ::LogJac) = -1.5*log1psq(x)
-(t::RealCircle)(x, ::Inv) = x/√(1-x^2)
+logjac(::RealCircle, x) = -1.5*log1psq(x)
+inverse(::RealCircle, x) = x/√(1-x^2)
 isincreasing(::RealCircle) = true
+
+rhs_string(::RealCircle, term) = "realcircle($term)"
 
 """
     Exp()
@@ -331,9 +359,11 @@ Mapping ``ℝ → ℝ⁺`` using ``x ↦ exp(x)``.
 
 image(::Exp) = ℝ⁺
 (t::Exp)(x) = exp(x)
-(t::Exp)(x, ::LogJac) = x
-(t::Exp)(x, ::Inv) = log(x)
+logjac(::Exp, x) = x
+inverse(::Exp, x) = log(x)
 isincreasing(::Exp) = true
+
+rhs_string(::Exp, term) = "exp($term)"
 
 ######################################################################
 # composed transformations
@@ -353,27 +383,26 @@ end
 
 (c::ComposedTransformation)(x) = c.f(c.g(x))
 
-function show(io::IO, c::ComposedTransformation)
-    show(io, c.f)
-    print(io, " ∘ ")
-    show(io, c.g)
-end
-
-function (t::ComposedTransformation)(x, ::LogJac)
-    @unpack f, g = t 
-    y = g(x)
-    log_g′x = g(x, LOGJAC)
-    log_f′y = f(y, LOGJAC)
-    log_f′y + log_g′x
-end
+rhs_string(t::ComposedTransformation, term) = rhs_string(t.f, rhs_string(t.g, term))
 
 image(t::ComposedTransformation) = t.f(image(t.g))
 
+function logjac(t::ComposedTransformation, x)
+    @unpack f, g = t 
+    y = g(x)
+    log_g′x = logjac(g, x)
+    log_f′y = logjac(f, y)
+    log_f′y + log_g′x
+end
+
+
+inverse(t::ComposedTransformation, x) = inverse(t.g, inverse(t.f, x))
+
 isincreasing(c::ComposedTransformation) = isincreasing(c.f) == isincreasing(c.g)
 
-(t::ComposedTransformation)(x, ::Inv) = t.g(t.f(x, INV), INV)
 
-∘(f::UnivariateTransformation, g::UnivariateTransformation) = ComposedTransformation(f, g)
+∘(f::UnivariateTransformation, g::UnivariateTransformation) =
+    ComposedTransformation(f, g)
 
 ∘(f::Affine, g::Affine) = Affine(f.α*g.α, fma(f.α, g.β, f.β))
 
@@ -414,16 +443,19 @@ transformation_to(y::AbstractInterval,
 # vector transformations
 ######################################################################
 
-struct VectorTransformation{T}
-    transformations::T
-end
+# struct VectorTransformation{T}
+#     transformations::T
+# end
 
-image(t::VectorTransformation) = image.(t.transformations)
-(t::VectorTransformation)(x) = map((t,x)->t(x), t.transformations, x)
-(t::VectorTransformation)(x, ::LogJac) =
-    sum(t(x, LOGJAC) for (t,x) in zip(t.transformations, x))
-(t::VectorTransformation)(x, ::Inv) = map((t,x)->t(x, INV), t.transformations, x)
-length(t::VectorTransformation) = sum(length(t) for t in t.transformations)
-size(t::VectorTransformation) = (length(t), )
+# image(t::VectorTransformation) = image.(t.transformations)
+
+# function (t::VectorTransformation)(x::AbstractVector{T}) where {T <: AbstractFloat}
+#     collect(T, Base.Generator((t,x)->t(x), t.transformations, x))
+# end
+# (t::VectorTransformation)(x, ::LogJac) =
+#     sum(t(x, LOGJAC) for (t,x) in zip(t.transformations, x))
+# (t::VectorTransformation)(x, ::Inv) = map((t,x)->t(x, INV), t.transformations, x)
+# length(t::VectorTransformation) = sum(length(t) for t in t.transformations)
+# size(t::VectorTransformation) = (length(t), )
 
 end # module
