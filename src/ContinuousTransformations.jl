@@ -339,7 +339,7 @@ logjac(::Logistic, x) = -(log1pexp(x)+log1pexp(-x))
 inverse(::Logistic, x) = logit(x)
 isincreasing(::Logistic) = true
 
-rhs_string(::Logistic) = "logistic($term)"
+rhs_string(::Logistic, term) = "logistic($term)"
 
 """
     RealCircle()

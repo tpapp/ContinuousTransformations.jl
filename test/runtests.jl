@@ -287,6 +287,17 @@ end
     test_transformation_to(NegativeRay(-7.0))
 end
 
+@testset "show" begin
+    @test repr(EXP) == "x ↦ exp(x)"
+    @test repr(REALCIRCLE) == "x ↦ realcircle(x)"
+    @test repr(LOGISTIC) == "x ↦ logistic(x)"
+    @test repr(NEGATION) == "x ↦ -x"
+    @test repr(Affine(1,0)) == "x ↦ x"
+    @test repr(Affine(2,0)) == "x ↦ 2⋅x"
+    @test repr(Affine(2,3)) == "x ↦ 2⋅x + 3"
+    @test repr(transformation_to(Segment(0,1))) == "x ↦ 0.5⋅realcircle(x) + 0.5"
+end
+
 """
     rand_Inf!(x, [p])
 
@@ -327,6 +338,8 @@ end
     test_array_transformation(REALCIRCLE, (3,2))
     @test_throws ArgumentError ArrayTransformation(EXP, -1, 2)
     @test_throws MethodError ArrayTransformation(EXP, "a fish")
+    @test repr(ArrayTransformation(EXP, 2, 3)) ==
+        repr(EXP) * " for (2, 3) elements"
 end
 
 # @testset "vector transformation" begin
