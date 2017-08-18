@@ -16,34 +16,28 @@ This package was born because I was tired of coding the same transformations ove
 Transformations defined by the package can be
 
 1. called as functions,
-2. called as functions and provide the Jacobian determinant or its log as the second value,
-3. inverted.
+2. provide the `logjac(transformation, x)` method for the log Jacobian determinant,
+3. prodide the `inverse(transformation, x)` method for the inverse.
 
-Jacobian determinants and their log are useful for domain transformations in MCMC, numerical integration, etc.
+Log jacobian determinants and their log are useful for domain transformations in MCMC, among other things.
 
 In addition, the package includes types to represent intervals, and some basic methods of working with them. The concept of intervals is slightly different from [IntervalSet.jl](https://github.com/JuliaMath/IntervalSets.jl) and [ValidatedNumerics.jl](https://github.com/dpsanders/ValidatedNumerics.jl), and as a result not compatible with either.
+
+The convenience function `transformation_to(image)` figures out the right transformation from `ℝ` (or `ℝⁿ`) to `image`. Currently implemented for intervals.
 
 Examples:
 ```julia
 using ContinuousTransformations
-t = LOGISTIC   # Transform ℝ to (0,1) using the logistic function.
-t(0.0)         # 0.5
-inv(t)         # LOGIT
-t(0, JAC)      # 0.5,0.25
-t(0, LOGJAC)   # 0.5,-1.3862943611198906
-domain(t)      # -∞..∞
-image(t)       # 0.0..1.0
+t = transformation_to(Segment(0.0, 3.0)) # will use a real-circle transformation, stretched
+t(0.0)             # 1.5
+inverse(t, 1.5)    # ≈ 0.0
+logjac(t, 0)       # ≈ 0.405
+image(t)           # Segment(0.0, 3.0)
 ```
 
-## Example for transforming integrals
+`ArrayTransformation(transformation, dimensions...)` transforms a vector of numbers to an array elementwise using `transformation`.
 
-```julia
-using ContinuousTransformations
-using Cubature
-
-f, dom = integral_substitution(INVODDSRATIO, x->exp(-x^2), 0..Inf)
-hquadrature(f, extrema(dom)...)[1] ≈ √π/2 # true
-```
+`TransformationTuple(transformations)` can be used for heterogeneous collections of transformations.
 
 ## Planned
 
