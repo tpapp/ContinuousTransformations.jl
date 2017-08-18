@@ -342,8 +342,12 @@ end
         repr(EXP) * " for (2, 3) elements"
 end
 
-# @testset "vector transformation" begin
-#     test_vector_transformation(transformation_to.((Segment(0,1), ℝ,
-#                                                    PositiveRay(2), NegativeRay(-9.0)));
-#                                N = 1)
-# end
+@testset "transformation tuple" begin
+    ts = transformation_to.((PositiveRay(1.0), NegativeRay(1.0), NegativeRay(1.0),
+                             ℝ, Segment(0.0,1.0)))
+    tt = TransformationTuple(ts)
+    @test length(tt) == sum(length, ts)
+    @inferred tt(ones(length(tt)))
+    x = randn(length(tt))
+    @test tt(x) == map((t,x) -> t(x), ts, tuple(x...))
+end
