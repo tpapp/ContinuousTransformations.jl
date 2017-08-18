@@ -477,7 +477,10 @@ transformation_string(t::ArrayTransformation, term) =
 
 (t::ArrayTransformation)(x) = reshape((t.transformation).(x), size(t))
 
-logjac(t::ArrayTransformation, x) = reshape(logjac.(t.transformation, x), size(t))
+function logjac(t::ArrayTransformation, x)
+    @argcheck length(x) == length(t) DimensionMismatch
+    sum(x -> logjac(t.transformation, x), x)
+end
 
 inverse(t::ArrayTransformation, x) =
     reshape(inverse.(t.transformation, x), size(t))

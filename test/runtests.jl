@@ -320,12 +320,13 @@ function test_array_transformation(t, dims; N = 500)
     @test_throws DimensionMismatch logjac(at, ones(dims .+ 1))
     for _ in 1:N
         x = randn(dims)
+        @inferred logjac(at, x)
+        @test logjac(at, x) == sum(logjac.(t, x))
+        ## log jacobian may be meaningless at Inf, introduce Inf's after
         rand_Inf!(x)
         y = t.(x)
         @inferred at(x)
         @test at(x) == y
-        @inferred logjac(at, x)
-        @test logjac(at, x) == logjac.(t, x)
         @inferred inverse(at, y)
         @test inverse(at, y) == inverse.(t, y)
     end
