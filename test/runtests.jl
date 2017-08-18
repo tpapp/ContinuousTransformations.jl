@@ -343,12 +343,16 @@ end
         repr(EXP) * " for (2, 3) elements"
 end
 
-@testset "transformation tuple" begin
+@testset "transformation tuple univariate" begin
     ts = transformation_to.((PositiveRay(1.0), NegativeRay(1.0), NegativeRay(1.0),
                              ℝ, Segment(0.0,1.0)))
     tt = TransformationTuple(ts)
     @test length(tt) == sum(length, ts)
-    @inferred tt(ones(length(tt)))
     x = randn(length(tt))
-    @test tt(x) == map((t,x) -> t(x), ts, tuple(x...))
+    y = @inferred tt(x)
+    @test y == map((t,x) -> t(x), ts, tuple(x...))
+    @inferred logjac(tt, x)
+    @test logjac(tt, x) == sum(map(logjac, ts, tuple(x...)))
+    @inferred inverse(tt, y)
+    @test inverse(tt, y) == map(inverse, ts, tuple(y...))
 end

@@ -501,6 +501,10 @@ end
 transformation_string(t::TransformationTuple, x) =
     "TransformationTuple" * repr(t.transformations)
 
+length(t::TransformationTuple) = sum(length(t) for t in t.transformations)
+
+image(t::TransformationTuple) = image.(t.transformations)
+
 function next_indexes(acc, t)
     l = length(t)
     acc + l, acc + (1:l)
@@ -518,15 +522,19 @@ next_indexes(acc, t::UnivariateTransformation) = acc+1, acc+1
     result
 end
 
-tuple_transformation(ts, indexes, x) = map((t,ix) -> t(x[ix]), ts, indexes)
-
 function (t::TransformationTuple)(x)
     ts = t.transformations
-    tuple_transformation(ts, transformation_indexes(ts), x)
+    map((t,ix) -> t(x[ix]), ts, transformation_indexes(ts))
 end
 
-length(t::TransformationTuple) = sum(length(t) for t in t.transformations)
+function logjac(t::TransformationTuple, x)
+    ts = t.transformations
+    sum(map((t,ix) -> logjac(t, x[ix]), ts, transformation_indexes(ts)))
+end
 
-image(t::TransformationTuple) = image.(t.transformations)
+function inverse(t::TransformationTuple, x)
+    ts = t.transformations
+    map((t,ix) -> inverse(t, x[ix]), ts, transformation_indexes(ts))
+end
 
 end # module
