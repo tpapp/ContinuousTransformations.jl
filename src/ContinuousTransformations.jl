@@ -6,6 +6,7 @@ using MacroTools
 using Parameters
 using StatsFuns
 using Lazy
+using Unrolled
 
 export
     AbstractInterval, RealLine, ℝ, PositiveRay, ℝ⁺, NegativeRay, ℝ⁻,
@@ -14,7 +15,7 @@ export
     Affine,
     Negation, NEGATION, Logistic, LOGISTIC, RealCircle, REALCIRCLE, Exp, EXP,
     affine_bridge, default_transformation, transformation_to,
-    ArrayTransformation
+    ArrayTransformation, TransformationTuple
     
 import Base:
     in, length, size, ∘, show,
@@ -446,9 +447,15 @@ transformation_to(y::AbstractInterval,
                       affine_bridge(image(transformation), y) ∘ transformation
 
 ######################################################################
-# vector transformations
+# array transformations
 ######################################################################
 
+"""
+    ArrayTransformation(transformation, dims)
+    ArrayTransformation(transformation, dims...)
+
+Apply transformation to a vector, returning an array of the given dimensions.
+"""
 struct ArrayTransformation{T <: UnivariateTransformation, D} <: ContinuousTransformation
     transformation::T
     function ArrayTransformation(transformation::T,
@@ -479,15 +486,44 @@ image(t::ArrayTransformation) = fill(image(t.transformation), size(t))
 
 @forward ArrayTransformation.t isincreasing
 
-# image(t::VectorTransformation) = image.(t.transformations)
+######################################################################
+# transformation tuple
+######################################################################
 
-# function (t::VectorTransformation)(x::AbstractVector{T}) where {T <: AbstractFloat}
-#     collect(T, Base.Generator((t,x)->t(x), t.transformations, x))
-# end
-# (t::VectorTransformation)(x, ::LogJac) =
-#     sum(t(x, LOGJAC) for (t,x) in zip(t.transformations, x))
-# (t::VectorTransformation)(x, ::Inv) = map((t,x)->t(x, INV), t.transformations, x)
-# length(t::VectorTransformation) = sum(length(t) for t in t.transformations)
-# size(t::VectorTransformation) = (length(t), )
+struct TransformationTuple{T <: Tuple{Vararg{ContinuousTransformation}}} <:
+    ContinuousTransformation
+    transformations::T
+end
+
+transformation_string(t::TransformationTuple, x) =
+    "TransformationTuple" * repr(t.transformations)
+
+function next_indexes(acc, t)
+    l = length(t)
+    acc + l, acc + (1:l)
+end
+
+next_indexes(acc, t::UnivariateTransformation) = acc+1, acc+1
+
+@unroll function transformation_indexes(ts)
+    acc = 0
+    result = ()
+    @unroll for t in ts
+        acc, ix = next_indexes(acc, t)
+        result = (result..., ix)
+    end
+    result
+end
+
+tuple_transformation(ts, indexes, x) = map((t,ix) -> t(x[ix]), ts, indexes)
+
+function (t::TransformationTuple)(x)
+    ts = t.transformations
+    tuple_transformation(ts, transformation_indexes(ts), x)
+end
+
+length(t::TransformationTuple) = sum(length(t) for t in t.transformations)
+
+image(t::TransformationTuple) = image.(t.transformations)
 
 end # module
