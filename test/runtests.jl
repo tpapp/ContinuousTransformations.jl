@@ -308,6 +308,7 @@ end
     tt = TransformationTuple(ts)
     @test length(tt) == sum(length, ts)
     @test image(tt) == image.(ts)
+    @test repr(tt) == "TransformationTuple" * repr(ts)
     for i in 1:length(ts)
         @test tt[i] == ts[i]
     end
@@ -325,6 +326,7 @@ end
     tt = TransformationTuple(ts)
     @test length(tt) == sum(length, ts) == 3
     @test image(tt) == image.(ts)
+    @test repr(tt) == "TransformationTuple" * repr(ts)
     for i in 1:length(ts)
         @test tt[i] == ts[i]
     end
