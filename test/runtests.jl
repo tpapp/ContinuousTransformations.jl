@@ -22,59 +22,6 @@ end
 # test: intervals
 ######################################################################
 
-# """
-#     rand_in(x::AbstractInterval)
-
-# Return a random float in an interval (for testing). Do not use
-# directly when testing extrema, as these may happen with `0`
-# probability.
-# """
-# rand_in(::RealLine, ::Type{Val{true}}) = randn()
-# rand_in(ray::PositiveRay, ::Type{Val{true}}) = ray.left + abs(randn())
-# rand_in(ray::NegativeRay, ::Type{Val{true}}) = ray.right - abs(randn())
-# rand_in(seg::Segment, ::Type{Val{true}}) = seg.left + width(seg) * rand()
-
-# function rand(x::AbstractInterval; left_prob = 0.1, right_prob = 0.1)
-#     @argcheck left_prob + right_prob ≤ 1
-#     z = rand()
-#     left, right = extrema(x)
-#     if z < left_prob
-#         left
-#     elseif z > 1-right_prob
-#         right
-#     else
-#         rand(x, Val{true})
-#     end
-# end
-
-
-# """
-#     random_interval(interval)
-
-# Return a function that generates a random sub-interval of the given `interval`. Useful for unit tests.
-# """
-# function random_interval(interval::AbstractInterval)
-#     a = rand(interval; right_prob = 0)
-#     b = rand(interval; left_prob = 0)
-#     if a > b
-#         a, b = b, a
-#     end
-#     Interval(a, b)
-# end
-
-# """
-#     scalars_outside_interval(interval)
-
-# Return a vector of values outside the `interval` (for testing).
-# """
-# scalars_outside_interval(::RealLine) = []
-# scalars_outside_interval(ray::PositiveRay) = ray.left - [0.1, 1.0, 2.0, Inf]
-# scalars_outside_interval(ray::NegativeRay) = ray.right + [0.1, 1.0, 2.0, Inf]
-# function scalars_outside_interval(seg::Segment)
-#     vcat(scalars_outside_interval(PositiveRay(seg.left)),
-#          scalars_outside_interval(NegativeRay(seg.right)))
-# end
-
 @testset "interval constructors" begin
     @test_throws ArgumentError Segment(NaN, NaN)
     @test_throws ArgumentError Segment(-Inf, Inf)
