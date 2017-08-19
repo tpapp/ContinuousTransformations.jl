@@ -222,6 +222,7 @@ end
         test_affine_bridge(PositiveRay(randn()), PositiveRay(randn()))
         test_affine_bridge(NegativeRay(randn()), NegativeRay(randn()))
         test_affine_bridge(PositiveRay(randn()), NegativeRay(randn()))
+        test_affine_bridge(NegativeRay(randn()), PositiveRay(randn()))
     end
 end
 
