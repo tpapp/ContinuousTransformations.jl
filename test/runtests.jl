@@ -128,6 +128,10 @@ end
     @test negray ∩ NegativeRay(7) == negray
 end
 
+@testset "interval printing" begin
+    @test repr(ℝ) == "ℝ"
+end
+
 ######################################################################
 # test: univariate transformation
 ######################################################################
