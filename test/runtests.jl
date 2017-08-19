@@ -151,7 +151,7 @@ end
     @test isincreasing(LOGISTIC)
 
     @test image(REALCIRCLE) == Segment(-1, 1)
-    @test isincreasing(EXP)
+    @test isincreasing(REALCIRCLE)
 
     @test image(EXP) == ℝ⁺
     @test isincreasing(EXP)
