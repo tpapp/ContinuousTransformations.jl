@@ -359,3 +359,19 @@ end
     @inferred inverse(tt, y)
     @test inverse(tt, y) == [map(inverse, ts, y)...]
 end
+
+@testset "transformation tuple mixed" begin
+    ts = (EXP, ArrayTransformation(REALCIRCLE, 2))
+    tt = TransformationTuple(ts)
+    @test length(tt) == sum(length, ts) == 3
+    for i in 1:length(ts)
+        @test tt[i] == ts[i]
+    end
+    x = randn(length(tt))
+    y = @inferred tt(x)
+    @test y == (ts[1](x[1]), ts[2](x[2:3]))
+    @inferred logjac(tt, x)
+    @test logjac(tt, x) == logjac(ts[1], x[1]) + logjac(ts[2], x[2:3])
+    @inferred inverse(tt, y)
+    @test inverse(tt, y) == vcat(inverse.(ts, y)...)
+end
