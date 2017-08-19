@@ -534,9 +534,8 @@ function logjac(t::TransformationTuple, x)
     sum(map((t,ix) -> logjac(t, x[ix]), ts, transformation_indexes(ts)))
 end
 
-function inverse(t::TransformationTuple, x)
-    ts = t.transformations
-    map((t,ix) -> inverse(t, x[ix]), ts, transformation_indexes(ts))
+function inverse(t::TransformationTuple, y)
+    vcat(map(inverse, t.transformations, y)...)
 end
 
 end # module

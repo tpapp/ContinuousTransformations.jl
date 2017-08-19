@@ -357,5 +357,5 @@ end
     @inferred logjac(tt, x)
     @test logjac(tt, x) == sum(map(logjac, ts, tuple(x...)))
     @inferred inverse(tt, y)
-    @test inverse(tt, y) == map(inverse, ts, tuple(y...))
+    @test inverse(tt, y) == [map(inverse, ts, y)...]
 end
