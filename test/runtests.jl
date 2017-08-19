@@ -307,6 +307,7 @@ end
                              ℝ, Segment(0.0,1.0)))
     tt = TransformationTuple(ts)
     @test length(tt) == sum(length, ts)
+    @test image(tt) == image.(ts)
     for i in 1:length(ts)
         @test tt[i] == ts[i]
     end
@@ -323,6 +324,7 @@ end
     ts = (EXP, ArrayTransformation(REALCIRCLE, 2))
     tt = TransformationTuple(ts)
     @test length(tt) == sum(length, ts) == 3
+    @test image(tt) == image.(ts)
     for i in 1:length(ts)
         @test tt[i] == ts[i]
     end
