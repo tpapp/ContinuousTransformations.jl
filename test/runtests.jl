@@ -348,6 +348,9 @@ end
                              ℝ, Segment(0.0,1.0)))
     tt = TransformationTuple(ts)
     @test length(tt) == sum(length, ts)
+    for i in 1:length(ts)
+        @test tt[i] == ts[i]
+    end
     x = randn(length(tt))
     y = @inferred tt(x)
     @test y == map((t,x) -> t(x), ts, tuple(x...))

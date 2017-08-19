@@ -18,7 +18,7 @@ export
     ArrayTransformation, TransformationTuple
     
 import Base:
-    in, length, size, ∘, show,
+    in, length, size, ∘, show, getindex,
     middle, linspace, intersect, extrema, minimum, maximum, isfinite, isinf, isapprox
     
 
@@ -504,6 +504,8 @@ transformation_string(t::TransformationTuple, x) =
 length(t::TransformationTuple) = sum(length(t) for t in t.transformations)
 
 image(t::TransformationTuple) = image.(t.transformations)
+
+getindex(t::TransformationTuple, ix) = t.transformations[ix]
 
 function next_indexes(acc, t)
     l = length(t)
