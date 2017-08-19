@@ -225,6 +225,13 @@ end
     end
 end
 
+@testset "interval negation" begin
+    @test NEGATION(Segment(1.0, 2.0)) == Segment(-2.0, -1.0)
+    @test NEGATION(PositiveRay(9.0)) == NegativeRay(-9.0)
+    @test NEGATION(NegativeRay(7.0)) == PositiveRay(-7.0)
+    @test NEGATION(ℝ) == ℝ
+end
+
 function test_transformation_to(y)
     @inferred transformation_to(y)
     t = transformation_to(y)
