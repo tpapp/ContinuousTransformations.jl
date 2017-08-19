@@ -472,8 +472,11 @@ size(t::ArrayTransformation{T,D}) where {T,D} = D
 
 length(t::ArrayTransformation) = prod(size(t))
 
-transformation_string(t::ArrayTransformation, term) = 
-    "$(transformation_string(t.transformation, term)) for $(size(t)) elements"
+function transformation_string(t::ArrayTransformation, term)
+    s = size(t)
+    s_print = length(s) == 1 ? s[1] : s
+    "$(transformation_string(t.transformation, term)) for $(s_print) elements"
+end
 
 (t::ArrayTransformation)(x) = reshape((t.transformation).(x), size(t))
 

@@ -298,8 +298,8 @@ end
     test_array_transformation(REALCIRCLE, (3,2))
     @test_throws ArgumentError ArrayTransformation(EXP, -1, 2)
     @test_throws MethodError ArrayTransformation(EXP, "a fish")
-    @test repr(ArrayTransformation(EXP, 2, 3)) ==
-        repr(EXP) * " for (2, 3) elements"
+    @test repr(ArrayTransformation(EXP, 2, 3)) == repr(EXP) * " for (2, 3) elements"
+    @test repr(ArrayTransformation(EXP, 2)) == repr(EXP) * " for 2 elements"
 end
 
 @testset "transformation tuple univariate" begin
