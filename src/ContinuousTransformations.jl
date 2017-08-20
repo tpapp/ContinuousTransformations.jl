@@ -58,6 +58,12 @@ macro define_singleton(name_and_supertype, constant = nothing)
     end
 end
 
+"""
+    _fma(x, y, z)
+
+Placeholder for `Base.fma` until https://github.com/JuliaDiff/ReverseDiff.jl/issues/86 is fixed.
+"""
+_fma(x, y, z) = x*y+z
 
 ######################################################################
 # intervals
@@ -290,9 +296,9 @@ Affine(α::T, β::T) where T = Affine{T}(α, β)
 Affine(α, β) = Affine(promote(α, β)...)
 
 image(::Affine) = ℝ
-(t::Affine)(x) = fma(x, t.α, t.β)
+(t::Affine)(x) = _fma(x, t.α, t.β)
 logjac(t::Affine, x) = log(abs(t.α))
-inverse(t::Affine, x) = fma(x, 1/t.α, -t.β/t.α)
+inverse(t::Affine, x) = _fma(x, 1/t.α, -t.β/t.α)
 isincreasing(t::Affine) = true
 
 (t::Affine)(x::Segment) = Segment(t(x.left), t(x.right))
@@ -411,7 +417,7 @@ isincreasing(c::ComposedTransformation) = isincreasing(c.f) == isincreasing(c.g)
 ∘(f::UnivariateTransformation, g::UnivariateTransformation) =
     ComposedTransformation(f, g)
 
-∘(f::Affine, g::Affine) = Affine(f.α*g.α, fma(f.α, g.β, f.β))
+∘(f::Affine, g::Affine) = Affine(f.α*g.α, _fma(f.α, g.β, f.β))
 
 ######################################################################
 # calculated transformations
