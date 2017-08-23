@@ -488,7 +488,8 @@ end
 
 function logjac(t::ArrayTransformation, x)
     @argcheck length(x) == length(t) DimensionMismatch
-    sum(x -> logjac(t.transformation, x), x)
+    lj(x) = logjac(t.transformation, x)
+    sum(lj, x)
 end
 
 inverse(t::ArrayTransformation, x) =
@@ -543,8 +544,6 @@ function logjac(t::TransformationTuple, x)
     sum(map((t,ix) -> logjac(t, x[ix]), ts, transformation_indexes(ts)))
 end
 
-function inverse(t::TransformationTuple, y)
-    vcat(map(inverse, t.transformations, y)...)
-end
+inverse(t::TransformationTuple, y::Tuple) = vcat(map(inverse, t.transformations, y)...)
 
 end # module

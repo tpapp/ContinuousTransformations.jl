@@ -338,3 +338,11 @@ end
     @inferred inverse(tt, y)
     @test inverse(tt, y) == vcat(inverse.(ts, y)...)
 end
+
+@testset "transformation tuple inference" begin
+    t = TransformationTuple((transformation_to(Segment(0.0,10.0)),
+                             ArrayTransformation(Affine(1,0), 2)))
+    @inferred t(ones(3))
+    @inferred logjac(t, ones(3))
+    @inferred inverse(t, (1.0, ones(2)))
+end
