@@ -346,3 +346,17 @@ end
     @inferred logjac(t, ones(3))
     @inferred inverse(t, (1.0, ones(2)))
 end
+
+@testset "transformation tuple by row" begin
+    t = TransformationTuple((transformation_to(Segment(0.0,10.0)),
+                             ArrayTransformation(Affine(1,0), 2)))
+    x = randn(length(t))
+    tx = t(x)
+    N = 100
+    y = repeat(x', inner = (N, 1))
+    ty = map_by_row(t, y)
+    @test length(ty) == length(tx)
+    @test all(size.(ty, 1) .== N)
+    @test ty[1] == fill(tx[1], N)
+    @test ty[2] == repeat(tx[2]', inner = (N, 1))
+end

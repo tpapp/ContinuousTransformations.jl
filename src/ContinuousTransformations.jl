@@ -15,7 +15,7 @@ export
     Affine,
     Negation, NEGATION, Logistic, LOGISTIC, RealCircle, REALCIRCLE, Exp, EXP,
     affine_bridge, default_transformation, transformation_to,
-    ArrayTransformation, TransformationTuple
+    ArrayTransformation, TransformationTuple, map_by_row
     
 import Base:
     in, length, size, ∘, show, getindex,
@@ -545,5 +545,20 @@ function logjac(t::TransformationTuple, x)
 end
 
 inverse(t::TransformationTuple, y::Tuple) = vcat(map(inverse, t.transformations, y)...)
+
+"""
+    map_by_row(t, x)
+
+Apply `t` to the rows of `x`, returning the results as a tuple of vectors or matrices.
+
+Useful for transforming (posterior) draws from a sample in ℝⁿ.
+"""
+function map_by_row(t::TransformationTuple, x::AbstractMatrix)
+    ts = t.transformations
+    ixs = transformation_indexes(ts)
+    _t(t, ix::Int) = t.(@view(x[:, ix]))
+    _t(t, ix::Range) = mapslices(t, @view(x[:, ix]), 2)
+    map(_t, ts, ixs)
+end
 
 end # module
