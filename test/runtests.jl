@@ -1,6 +1,7 @@
 using ContinuousTransformations
 using Base.Test
 import ForwardDiff: derivative
+using InferenceUtilities
 
 ######################################################################
 # test: utilities
@@ -10,12 +11,10 @@ import ForwardDiff: derivative
 ContinuousTransformations.@define_singleton TestSingleton <: Real
 
 @testset "define singleton" begin
-    
     @test TestSingleton <: Real
     @test isa(TESTSINGLETON, TestSingleton)
     @test repr(@doc(TESTSINGLETON)) == repr(@doc(TestSingleton)) ==
         repr(doc"Test singleton type.")
-
 end
 
 ######################################################################
@@ -175,12 +174,13 @@ Test univariate transformation `f` with `x`. Tests for:
 function test_univariate(t::UnivariateTransformation, x; AD_exceptions = Dict())
     @test length(t) == 1
     @test size(t) == ()
-    @inferred t(x)
+    @test @isinferred t(x)
     y = t(x)
     @test y ∈ image(t)
-    @inferred inverse(t, y)
+    @test @isinferred inverse(t, y)
     @test inverse(t, y) ≈ x
-    lj = @inferred logjac(t, x)
+    @test @isinferred logjac(t, x)
+    lj = logjac(t, x)
     deriv = get(AD_exceptions, x, derivative(t, x))
     @test lj ≈ log(abs(deriv))
 end
@@ -234,7 +234,7 @@ end
 end
 
 function test_transformation_to(y)
-    @inferred transformation_to(y)
+    @test @isinferred transformation_to(y)
     t = transformation_to(y)
     @test image(t) == y
     test_univariate_random(t)
@@ -279,14 +279,14 @@ function test_array_transformation(t, dims; N = 500)
     @test_throws DimensionMismatch logjac(at, ones(dims .+ 1))
     for _ in 1:N
         x = randn(dims)
-        @inferred logjac(at, x)
+        @test @isinferred logjac(at, x)
         @test logjac(at, x) == sum(logjac.(t, x))
         ## log jacobian may be meaningless at Inf, introduce Inf's after
         rand_Inf!(x)
         y = t.(x)
-        @inferred at(x)
+        @test @isinferred at(x)
         @test at(x) == y
-        @inferred inverse(at, y)
+        @test @isinferred inverse(at, y)
         @test inverse(at, y) == inverse.(t, y)
     end
 end
@@ -313,11 +313,12 @@ end
         @test tt[i] == ts[i]
     end
     x = randn(length(tt))
-    y = @inferred tt(x)
+    @test @isinferred tt(x)
+    y = tt(x)
     @test y == map((t,x) -> t(x), ts, tuple(x...))
-    @inferred logjac(tt, x)
+    @test @isinferred logjac(tt, x)
     @test logjac(tt, x) == sum(map(logjac, ts, tuple(x...)))
-    @inferred inverse(tt, y)
+    @test @isinferred inverse(tt, y)
     @test inverse(tt, y) == [map(inverse, ts, y)...]
 end
 
@@ -331,20 +332,21 @@ end
         @test tt[i] == ts[i]
     end
     x = randn(length(tt))
-    y = @inferred tt(x)
+    @test @isinferred tt(x)
+    y = tt(x)
     @test y == (ts[1](x[1]), ts[2](x[2:3]))
-    @inferred logjac(tt, x)
+    @test @isinferred logjac(tt, x)
     @test logjac(tt, x) == logjac(ts[1], x[1]) + logjac(ts[2], x[2:3])
-    @inferred inverse(tt, y)
+    @test @isinferred inverse(tt, y)
     @test inverse(tt, y) == vcat(inverse.(ts, y)...)
 end
 
 @testset "transformation tuple inference" begin
     t = TransformationTuple((transformation_to(Segment(0.0,10.0)),
                              ArrayTransformation(Affine(1,0), 2)))
-    @inferred t(ones(3))
-    @inferred logjac(t, ones(3))
-    @inferred inverse(t, (1.0, ones(2)))
+    @test @isinferred t(ones(3))
+    @test @isinferred logjac(t, ones(3))
+    @test @isinferred inverse(t, (1.0, ones(2)))
 end
 
 @testset "transformation tuple by row" begin

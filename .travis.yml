@@ -11,7 +11,7 @@ notifications:
 # getting latest master of ArgCheck
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia -e 'Pkg.clone(pwd()); Pkg.add("ArgCheck"); Pkg.checkout("ArgCheck"); Pkg.build("ContinuousTransformations"); Pkg.test("ContinuousTransformations"; coverage=true)'
+  - julia test_script.jl
 after_success:
   # push coverage results to Coveralls
   - julia -e 'cd(Pkg.dir("ContinuousTransformations")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
