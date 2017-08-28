@@ -2,6 +2,7 @@ using ContinuousTransformations
 using Base.Test
 import ForwardDiff: derivative
 using InferenceUtilities
+using Parameters
 
 ######################################################################
 # test: utilities
@@ -16,6 +17,22 @@ ContinuousTransformations.@define_singleton TestSingleton <: Real
     @test repr(@doc(TESTSINGLETON)) == repr(@doc(TestSingleton)) ==
         repr(doc"Test singleton type.")
 end
+
+"""
+    rand_in(x)
+
+Random number in `x` (eg a finite or infinite interval).
+"""
+function rand_in(segment::Segment)
+    @unpack left, right = segment
+    rand()*(right-left) + left
+end
+
+rand_in(ray::PositiveRay) = ray.left + randn()^2
+
+rand_in(ray::NegativeRay) = ray.left + randn()^2
+
+rand_in(::RealLine) = randn()
 
 ######################################################################
 # test: intervals
@@ -193,7 +210,7 @@ end
 function test_univariate_random(t::UnivariateTransformation; N=500,
                                 AD_exceptions = Dict())
     for _ in 1:N
-        test_univariate(t, randn(), AD_exceptions = AD_exceptions)
+        test_univariate(t, rand_in(domain(t)), AD_exceptions = AD_exceptions)
     end
 end
 
