@@ -140,18 +140,23 @@ end
     @test_throws DomainError Affine(-1, 2.0)
     @test Affine(1, 2.0) == Affine(1.0, 2.0)
     a = Affine(1,2)
+    @test domain(a) == ℝ
     @test image(a) == ℝ
     @test isincreasing(a)
 
+    @test domain(NEGATION) == ℝ
     @test image(NEGATION) == ℝ
     @test !isincreasing(NEGATION)
     
+    @test domain(LOGISTIC) == ℝ
     @test image(LOGISTIC) == Segment(0, 1)
     @test isincreasing(LOGISTIC)
 
+    @test domain(REALCIRCLE) == ℝ
     @test image(REALCIRCLE) == Segment(-1, 1)
     @test isincreasing(REALCIRCLE)
 
+    @test domain(EXP) == ℝ
     @test image(EXP) == ℝ⁺
     @test isincreasing(EXP)
 end
@@ -182,10 +187,11 @@ function test_univariate(t::UnivariateTransformation, x; AD_exceptions = Dict())
     @test @isinferred logjac(t, x)
     lj = logjac(t, x)
     deriv = get(AD_exceptions, x, derivative(t, x))
-    @test lj ≈ log(abs(deriv))
+    @test lj ≈ log(abs(deriv)) rtol=1e-5
 end
 
-function test_univariate_random(t::UnivariateTransformation; N=500, AD_exceptions = Dict())
+function test_univariate_random(t::UnivariateTransformation; N=500,
+                                AD_exceptions = Dict())
     for _ in 1:N
         test_univariate(t, randn(), AD_exceptions = AD_exceptions)
     end

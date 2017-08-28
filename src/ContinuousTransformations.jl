@@ -11,7 +11,7 @@ using Unrolled
 export
     AbstractInterval, RealLine, ℝ, PositiveRay, ℝ⁺, NegativeRay, ℝ⁻,
     Segment, width,
-    UnivariateTransformation, image, isincreasing, inverse, logjac,
+    UnivariateTransformation, domain, image, isincreasing, inverse, logjac,
     Affine,
     Negation, NEGATION, Logistic, LOGISTIC, RealCircle, REALCIRCLE, Exp, EXP,
     affine_bridge, default_transformation, transformation_to,
@@ -184,7 +184,7 @@ linspace(s::Segment, n = 50) = linspace(s.left, s.right, n)
 ## general fallback method. define specific methods with the following
 ## argument ordering Segment < PositiveRay < NegativeRay < RealLine < all
 intersect(a::AbstractInterval, b::AbstractInterval) = intersect(b, a)
-    
+
 intersect(a::RealLine, b::AbstractInterval) = b
 
 """
@@ -233,6 +233,13 @@ Return ``t⁻¹(x)``.
 function inverse end
 
 """
+    domain(transformation)
+
+Return the domain of the transformation.
+"""
+function domain end
+
+"""
     image(transformation)
 
 Return the image of the transformation.
@@ -265,7 +272,8 @@ show(io::IO, t::ContinuousTransformation) =
 ######################################################################
 
 """
-Univariate monotone transformation, either *increasing* or *decreasing* on the whole domain (thus, a bijection).
+Univariate monotone transformation, either *increasing* or *decreasing* on the
+whole domain (thus, a bijection).
 """
 abstract type UnivariateTransformation <: ContinuousTransformation end
 
@@ -305,6 +313,7 @@ end
 Affine(α::T, β::T) where T = Affine{T}(α, β)
 Affine(α, β) = Affine(promote(α, β)...)
 
+domain(::Affine) = ℝ
 image(::Affine) = ℝ
 (t::Affine)(x) = _fma(x, t.α, t.β)
 logjac(t::Affine, x) = log(abs(t.α))
@@ -330,6 +339,7 @@ Mapping ``ℝ → ℝ`` using ``x ↦ -x``.
 """
 @define_singleton Negation <: UnivariateTransformation
 
+domain(::Negation) = ℝ
 image(::Negation) = ℝ
 (::Negation)(x) = -x
 logjac(::Negation, x) = zero(x)
@@ -350,6 +360,7 @@ Mapping ``ℝ → (0,1)`` using ``x ↦ x/(1+x)``.
 """
 @define_singleton Logistic <: UnivariateTransformation
 
+domain(::Logistic) = ℝ
 image(::Logistic) = Segment(0, 1)
 (t::Logistic)(x) = logistic(x)
 logjac(::Logistic, x) = -(log1pexp(x)+log1pexp(-x))
@@ -365,6 +376,7 @@ Mapping ``ℝ → (-1,1)`` using ``x ↦ x/√(1+x^2)``.
 """
 @define_singleton RealCircle <: UnivariateTransformation
 
+domain(::RealCircle) = ℝ
 image(::RealCircle) = Segment(-1, 1)
 (t::RealCircle)(x) = isinf(x) ? sign(x) : x/√(1+x^2)
 logjac(::RealCircle, x) = -1.5*log1psq(x)
@@ -380,6 +392,7 @@ Mapping ``ℝ → ℝ⁺`` using ``x ↦ exp(x)``.
 """
 @define_singleton Exp <: UnivariateTransformation
 
+domain(::Exp) = ℝ
 image(::Exp) = ℝ⁺
 (t::Exp)(x) = exp(x)
 logjac(::Exp, x) = x
