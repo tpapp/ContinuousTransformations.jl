@@ -61,7 +61,8 @@ end
 """
     _fma(x, y, z)
 
-Placeholder for `Base.fma` until https://github.com/JuliaDiff/ReverseDiff.jl/issues/86 is fixed.
+Placeholder for `Base.fma` until
+https://github.com/JuliaDiff/ReverseDiff.jl/issues/86 is fixed.
 """
 _fma(x, y, z) = x*y+z
 
@@ -239,14 +240,15 @@ Return the image of the transformation.
 function image end
 
 """
-Continuous bijection ℝⁿ→ℝⁿ.
+Continuous bijection ``D ⊂ ℝⁿ→ I ⊂ ℝⁿ`` or ``D ⊂ ℝ → I ⊂ ℝ``.
 """
 abstract type ContinuousTransformation <: Function end
 
 """
     rhs_string(transformation, term)
 
-Return the formula representing the hand side of the `transformation`, with `term` as the argument.
+Return the formula representing the hand side of the `transformation`, with
+`term` as the argument.
 """
 function rhs_string end
 
@@ -274,9 +276,17 @@ size(::UnivariateTransformation) = ()
 """
     isincreasing(transformation)
 
-Return `true` (`false`), when the transformation is monotone increasing (decreasing).
+Return `true` (`false`), when the transformation is monotonically increasing
+(decreasing).
 """
 function isincreasing end
+
+######################################################################
+# Affine and Negation
+#
+# These play a special role since map subtypes of `AbstractInterval` to
+# themselves, and thus are useful for composition.
+######################################################################
 
 """
     Affine(α, β)
