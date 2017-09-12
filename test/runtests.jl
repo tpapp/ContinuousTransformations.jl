@@ -164,18 +164,37 @@ end
     @test domain(NEGATION) == ℝ
     @test image(NEGATION) == ℝ
     @test !isincreasing(NEGATION)
+    @test inverse(NEGATION) == NEGATION
 
     @test domain(LOGISTIC) == ℝ
     @test image(LOGISTIC) == Segment(0, 1)
     @test isincreasing(LOGISTIC)
+    @test inverse(LOGISTIC) == LOGIT
+
+    @test domain(LOGIT) == Segment(0, 1)
+    @test image(LOGIT) == ℝ
+    @test isincreasing(LOGIT)
+    @test inverse(LOGIT) == LOGISTIC
 
     @test domain(REALCIRCLE) == ℝ
     @test image(REALCIRCLE) == Segment(-1, 1)
     @test isincreasing(REALCIRCLE)
+    @test inverse(REALCIRCLE) == INVREALCIRCLE
+
+    @test domain(INVREALCIRCLE) == Segment(-1, 1)
+    @test image(INVREALCIRCLE) == ℝ
+    @test isincreasing(INVREALCIRCLE)
+    @test inverse(INVREALCIRCLE) == REALCIRCLE
 
     @test domain(EXP) == ℝ
     @test image(EXP) == ℝ⁺
     @test isincreasing(EXP)
+    @test inverse(EXP) == LOG
+
+    @test domain(LOG) == ℝ⁺
+    @test image(LOG) == ℝ
+    @test isincreasing(LOG)
+    @test inverse(LOG) == EXP
 end
 
 """
@@ -222,8 +241,11 @@ const logistic_AD_exceptions = Dict(-Inf => 0.0)
     test_univariate_random(Affine(1,2))
     test_univariate_random(NEGATION)
     test_univariate_random(LOGISTIC; AD_exceptions = logistic_AD_exceptions)
+    test_univariate_random(LOGIT)
     test_univariate_random(REALCIRCLE)
+    test_univariate_random(INVREALCIRCLE)
     test_univariate_random(EXP)
+    test_univariate_random(LOG)
 end
 
 random_segment() = Segment(sort(randn(2))...)
@@ -273,8 +295,11 @@ end
 
 @testset "show" begin
     @test repr(EXP) == "x ↦ exp(x)"
+    @test repr(LOG) == "x ↦ log(x)"
     @test repr(REALCIRCLE) == "x ↦ realcircle(x)"
+    @test repr(INVREALCIRCLE) == "x ↦ realcircle⁻¹(x)"
     @test repr(LOGISTIC) == "x ↦ logistic(x)"
+    @test repr(LOGIT) == "x ↦ logit(x)"
     @test repr(NEGATION) == "x ↦ -x"
     @test repr(Affine(1,0)) == "x ↦ x"
     @test repr(Affine(2,0)) == "x ↦ 2⋅x"

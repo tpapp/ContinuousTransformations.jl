@@ -14,6 +14,7 @@ export
     UnivariateTransformation, domain, image, isincreasing, inverse, logjac,
     Affine,
     Negation, NEGATION, Logistic, LOGISTIC, RealCircle, REALCIRCLE, Exp, EXP,
+    Logit, LOGIT, InvRealCircle, INVREALCIRCLE, Log, LOG,
     affine_bridge, default_transformation, transformation_to,
     ArrayTransformation, TransformationTuple, map_by_row
 
@@ -465,7 +466,7 @@ domain(::Logit) = Segment(0, 1)
 image(::Logit) = ℝ
 (t::Logit)(x) = logit(x)
 logjac(::Logit, x) = -log(x)-log1p(-x)
-inverse(::Logit) = LOGIT
+inverse(::Logit) = LOGISTIC
 isincreasing(::Logit) = true
 
 rhs_string(::Logit, term) = "logit($term)"
