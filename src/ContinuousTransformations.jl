@@ -599,7 +599,9 @@ default_transformation(::RealLine) = Affine(1, 0)
 """
     transformation_to(y, [transformation])
 
-Return a transformation that maps ℝ (or ℝⁿ when applicable) to `y`. The second argument may be used to specify a particular transformation, otherwise `default_transformation` is used.
+Return a transformation that maps ℝ (or ℝⁿ when applicable) to `y`. The second
+argument may be used to specify a particular transformation, otherwise
+`default_transformation` is used.
 """
 transformation_to(y::AbstractInterval,
                   transformation = default_transformation(y)) =
@@ -615,7 +617,8 @@ transformation_to(y::AbstractInterval,
 
 Apply transformation to a vector, returning an array of the given dimensions.
 """
-struct ArrayTransformation{T <: UnivariateTransformation, D} <: ContinuousTransformation
+struct ArrayTransformation{T <: UnivariateTransformation,
+                           D} <: ContinuousTransformation
     transformation::T
     function ArrayTransformation(transformation::T,
                                  dims::Tuple{Vararg{Int64, N}}) where {T,N}
@@ -697,12 +700,14 @@ function logjac(t::TransformationTuple, x)
     sum(map((t,ix) -> logjac(t, x[ix]), ts, transformation_indexes(ts)))
 end
 
-inverse(t::TransformationTuple, y::Tuple) = vcat(map(inverse, t.transformations, y)...)
+inverse(t::TransformationTuple, y::Tuple) =
+    vcat(map(inverse, t.transformations, y)...)
 
 """
     map_by_row(t, x)
 
-Apply `t` to the rows of `x`, returning the results as a tuple of vectors or matrices.
+Apply `t` to the rows of `x`, returning the results as a tuple of vectors or
+matrices.
 
 Useful for transforming (posterior) draws from a sample in ℝⁿ.
 """
