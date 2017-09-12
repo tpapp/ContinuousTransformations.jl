@@ -164,7 +164,7 @@ end
     @test domain(NEGATION) == ℝ
     @test image(NEGATION) == ℝ
     @test !isincreasing(NEGATION)
-    
+
     @test domain(LOGISTIC) == ℝ
     @test image(LOGISTIC) == Segment(0, 1)
     @test isincreasing(LOGISTIC)
@@ -191,7 +191,9 @@ Test univariate transformation `f` with `x`. Tests for:
 
 4. log Jacobian determinant (using automatic differentiation).
 
-`forwarddiff_exceptions` is a dictionary handling exceptions that ForwardDiff cannot cope with at the moment. See [this discussion](https://github.com/JuliaDiff/ForwardDiff.jl/issues/209).
+`forwarddiff_exceptions` is a dictionary handling exceptions that ForwardDiff
+cannot cope with at the moment. See [this
+discussion](https://github.com/JuliaDiff/ForwardDiff.jl/issues/209).
 """
 function test_univariate(t::UnivariateTransformation, x; AD_exceptions = Dict())
     @test length(t) == 1

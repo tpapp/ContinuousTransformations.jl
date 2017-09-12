@@ -16,11 +16,12 @@ export
     Negation, NEGATION, Logistic, LOGISTIC, RealCircle, REALCIRCLE, Exp, EXP,
     affine_bridge, default_transformation, transformation_to,
     ArrayTransformation, TransformationTuple, map_by_row
-    
+
 import Base:
-    in, length, size, ∘, show, getindex,
-    middle, linspace, intersect, extrema, minimum, maximum, isfinite, isinf, isapprox
-    
+    in, length, size, ∘, show, getindex, middle, linspace, intersect, extrema,
+    minimum, maximum, isfinite, isinf, isapprox
+
+const log1p = Base.Math.JuliaLibm.log1p # should be faster and more accurate?
 
 ######################################################################
 # utilities
@@ -229,8 +230,13 @@ function logjac end
     inverse(t, x)
 
 Return ``t⁻¹(x)``.
+
+    inverse(t)
+
+Return ``t⁻¹``. Note that while `inverse(t, x)` is always defined, not all
+transformations have an explicit inverse.
 """
-function inverse end
+inverse(t, x) = inverse(t)(x)
 
 """
     domain(transformation)
@@ -289,6 +295,38 @@ Return `true` (`false`), when the transformation is monotonically increasing
 """
 function isincreasing end
 
+"""
+Trait that is useful for domain and image calculations. See `RRStable`.
+"""
+abstract type RRStability end
+
+"""
+Trait that indicates that a univariate transformation
+
+1. maps ℝ to ℝ,
+
+2. supports mapping intervals, and
+
+3. maps subtypes of AbstractInterval to the same type.
+"""
+struct RRStable <: RRStability end
+
+"""
+Trait that indicates that a univariate transformation is *not* `RRStable`.
+"""
+struct NotRRStable <: RRStability end
+
+"""
+    RR_stability(::UnivariateTransformation)
+
+Return either the trait `RRStable` and `NotRRStable`.
+"""
+RR_stability(::UnivariateTransformation) = NotRRStable()
+
+∘(::RRStability, ::RRStability) = NotRRStable()
+
+∘(::RRStable, ::RRStable) = RRStable()
+
 ######################################################################
 # Affine and Negation
 #
@@ -317,8 +355,11 @@ domain(::Affine) = ℝ
 image(::Affine) = ℝ
 (t::Affine)(x) = _fma(x, t.α, t.β)
 logjac(t::Affine, x) = log(abs(t.α))
-inverse(t::Affine, x) = _fma(x, 1/t.α, -t.β/t.α)
+inverse(t::Affine) = Affine(1/t.α, -t.β/t.α)
 isincreasing(t::Affine) = true
+
+RR_stability(::Affine) = RRStable()
+inverse(t::Affine) = Affine(1/t.α, -t.β/t.α)
 
 (t::Affine)(x::Segment) = Segment(t(x.left), t(x.right))
 (t::Affine)(x::PositiveRay) = PositiveRay(t(x.left))
@@ -333,7 +374,7 @@ function rhs_string(t::Affine, term)
 end
 
 """
-    Negation.
+    Negation()
 
 Mapping ``ℝ → ℝ`` using ``x ↦ -x``.
 """
@@ -343,20 +384,28 @@ domain(::Negation) = ℝ
 image(::Negation) = ℝ
 (::Negation)(x) = -x
 logjac(::Negation, x) = zero(x)
-inverse(::Negation, x) = -x
+inverse(::Negation) = NEGATION
 isincreasing(::Negation) = false
+
+RR_stability(::Negation) = RRStable()
 
 (::Negation)(x::Segment) = Segment(-x.right, -x.left)
 (::Negation)(x::PositiveRay) = NegativeRay(-x.left)
 (::Negation)(x::NegativeRay) = PositiveRay(-x.right)
 (::Negation)(::RealLine) = ℝ
 
+inverse(::Negation) = NEGATION
+
 rhs_string(::Negation, term) = "-" * term
+
+######################################################################
+# transformations from ℝ to subsets
+######################################################################
 
 """
     Logistic()
 
-Mapping ``ℝ → (0,1)`` using ``x ↦ x/(1+x)``.
+Mapping ``ℝ → (0,1)`` using ``x ↦ 1/(1+exp(-x))``.
 """
 @define_singleton Logistic <: UnivariateTransformation
 
@@ -364,7 +413,7 @@ domain(::Logistic) = ℝ
 image(::Logistic) = Segment(0, 1)
 (t::Logistic)(x) = logistic(x)
 logjac(::Logistic, x) = -(log1pexp(x)+log1pexp(-x))
-inverse(::Logistic, x) = logit(x)
+inverse(::Logistic) = LOGIT
 isincreasing(::Logistic) = true
 
 rhs_string(::Logistic, term) = "logistic($term)"
@@ -380,7 +429,7 @@ domain(::RealCircle) = ℝ
 image(::RealCircle) = Segment(-1, 1)
 (t::RealCircle)(x) = isinf(x) ? sign(x) : x/√(1+x^2)
 logjac(::RealCircle, x) = -1.5*log1psq(x)
-inverse(::RealCircle, x) = x/√(1-x^2)
+inverse(::RealCircle) = INVREALCIRCLE # x/√(1-x^2)
 isincreasing(::RealCircle) = true
 
 rhs_string(::RealCircle, term) = "realcircle($term)"
@@ -396,10 +445,62 @@ domain(::Exp) = ℝ
 image(::Exp) = ℝ⁺
 (t::Exp)(x) = exp(x)
 logjac(::Exp, x) = x
-inverse(::Exp, x) = log(x)
+inverse(::Exp) = LOG
 isincreasing(::Exp) = true
 
 rhs_string(::Exp, term) = "exp($term)"
+
+######################################################################
+# transformations to ℝ from subsets
+######################################################################
+
+"""
+    Logit()
+
+Mapping ``(0,1) → ℝ`` using ``x ↦ log(x/(1-x))``.
+"""
+@define_singleton Logit <: UnivariateTransformation
+
+domain(::Logit) = Segment(0, 1)
+image(::Logit) = ℝ
+(t::Logit)(x) = logit(x)
+logjac(::Logit, x) = -log(x)-log1p(-x)
+inverse(::Logit) = LOGIT
+isincreasing(::Logit) = true
+
+rhs_string(::Logit, term) = "logit($term)"
+
+"""
+    InvRealCircle()
+
+Mapping ``(-1,1) → ℝ`` using ``x ↦ x/√(1-x^2)``.
+"""
+@define_singleton InvRealCircle <: UnivariateTransformation
+
+domain(::InvRealCircle) = Segment(-1, 1)
+image(::InvRealCircle) = ℝ
+(t::InvRealCircle)(x) = x/√(1-x^2)
+logjac(::InvRealCircle, x) = -1.5*log1p(-abs2(x))
+inverse(::InvRealCircle) = REALCIRCLE
+isincreasing(::InvRealCircle) = true
+
+rhs_string(::InvRealCircle, term) = "realcircle⁻¹($term)"
+
+"""
+    Log()
+
+Mapping ``ℝ → ℝ⁺`` using ``x ↦ exp(x)``.
+"""
+@define_singleton Log <: UnivariateTransformation
+
+domain(::Log) = ℝ⁺
+image(::Log) = ℝ
+(t::Log)(x) = log(x)
+logjac(::Log, x) = -log(x)
+inverse(::Log) = EXP
+isincreasing(::Log) = true
+
+rhs_string(::Log, term) = "log($term)"
 
 ######################################################################
 # composed transformations
@@ -408,7 +509,10 @@ rhs_string(::Exp, term) = "exp($term)"
 """
     ComposedTransformation(f, g)
 
-Compose two univariate transformations. Use the `∘` operator for construction.
+Compose two univariate transformations, resulting in the mapping
+``f∘g``, or ``x ↦ f(g(x))`.
+
+Use the `∘` operator for construction.
 """
 struct ComposedTransformation{Tf <: UnivariateTransformation,
                               Tg <: UnivariateTransformation} <:
@@ -417,25 +521,51 @@ struct ComposedTransformation{Tf <: UnivariateTransformation,
     g::Tg
 end
 
+RR_stability(t::ComposedTransformation) = RR_stability(t.f) ∘ RR_stability(t.g)
+
 (c::ComposedTransformation)(x) = c.f(c.g(x))
 
-rhs_string(t::ComposedTransformation, term) = rhs_string(t.f, rhs_string(t.g, term))
+rhs_string(t::ComposedTransformation, term) =
+    rhs_string(t.f, rhs_string(t.g, term))
 
-image(t::ComposedTransformation) = t.f(image(t.g))
+# composed image and domain uses traits, effectively allowing calculation for
+# composing with Affine and Negation
+
+"""
+    composed_image(f_RR_stability, g_RR_stability, f, g)
+"""
+composed_image(::RRStable, ::RRStability, f, g) = f(image(g))
+
+composed_image(::RRStability, ::RRStable, f, g) = image(f)
+
+composed_image(::RRStable, ::RRStable, f, g) = ℝ
+
+"""
+    composed_domain(f_RR_stability, g_RR_stability, f, g)
+"""
+composed_domain(::RRStable, ::RRStability, f, g) = domain(g)
+
+composed_domain(::RRStability, ::RRStable, f, g) = inverse(g)(domain(f))
+
+composed_domain(::RRStable, ::RRStable, f, g) = ℝ
+
+image(t::ComposedTransformation) =
+    composed_image(RR_stability(t.f), RR_stability(t.g), t.f, t.g)
+
+domain(t::ComposedTransformation) =
+    composed_domain(RR_stability(t.f), RR_stability(t.g), t.f, t.g)
 
 function logjac(t::ComposedTransformation, x)
-    @unpack f, g = t 
+    @unpack f, g = t
     y = g(x)
     log_g′x = logjac(g, x)
     log_f′y = logjac(f, y)
     log_f′y + log_g′x
 end
 
-
 inverse(t::ComposedTransformation, x) = inverse(t.g, inverse(t.f, x))
 
 isincreasing(c::ComposedTransformation) = isincreasing(c.f) == isincreasing(c.g)
-
 
 ∘(f::UnivariateTransformation, g::UnivariateTransformation) =
     ComposedTransformation(f, g)
@@ -472,7 +602,7 @@ default_transformation(::RealLine) = Affine(1, 0)
 Return a transformation that maps ℝ (or ℝⁿ when applicable) to `y`. The second argument may be used to specify a particular transformation, otherwise `default_transformation` is used.
 """
 transformation_to(y::AbstractInterval,
-                  transformation = default_transformation(y)) = 
+                  transformation = default_transformation(y)) =
                       affine_bridge(image(transformation), y) ∘ transformation
 
 ######################################################################
