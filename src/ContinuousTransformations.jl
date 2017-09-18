@@ -22,7 +22,8 @@ import Base:
     in, length, size, ∘, show, getindex, middle, linspace, intersect, extrema,
     minimum, maximum, isfinite, isinf, isapprox
 
-const log1p = Base.Math.JuliaLibm.log1p # should be faster and more accurate?
+# disabled until https://github.com/JuliaDiff/ForwardDiff.jl/issues/261 is fixed
+# const log1p = Base.Math.JuliaLibm.log1p # should be faster and more accurate?
 
 ######################################################################
 # utilities
