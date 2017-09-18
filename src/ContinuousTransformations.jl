@@ -16,7 +16,7 @@ export
     Negation, NEGATION, Logistic, LOGISTIC, RealCircle, REALCIRCLE, Exp, EXP,
     Logit, LOGIT, InvRealCircle, INVREALCIRCLE, Log, LOG,
     affine_bridge, default_transformation, transformation_to,
-    ArrayTransformation, TransformationTuple, map_by_row
+    ArrayTransformation, TransformationTuple, map_by_row, StructTransformation
 
 import Base:
     in, length, size, ∘, show, getindex, middle, linspace, intersect, extrema,
@@ -719,5 +719,35 @@ function map_by_row(t::TransformationTuple, x::AbstractMatrix)
     _t(t, ix::Range) = mapslices(t, @view(x[:, ix]), 2)
     map(_t, ts, ixs)
 end
+
+######################################################################
+# transformation to structures
+######################################################################
+
+"""
+    StructTransformation(constructor, transformation)
+
+
+"""
+struct StructTransformation{Tconstructor,
+                            Ttransformation <: TransformationTuple} <:
+        ContinuousTransformation
+    constructor::Tconstructor
+    transformation::Ttransformation
+end
+
+StructTransformation(constructor, ts::ContinuousTransformation...) =
+    StructTransformation(constructor, TransformationTuple(ts))
+
+@forward StructTransformation.transformation domain, length
+
+image(t::StructTransformation) = t.result_type
+
+(t::StructTransformation)(x) = t.constructor(t.transformation(x)...)
+
+logjac(t::StructTransformation, x) = logjac(t.transformation, x)
+
+transformation_string(t::StructTransformation, x) =
+    string(t.constructor) * repr(t.transformation.transformations)
 
 end # module

@@ -412,3 +412,10 @@ end
     @test ty[1] == fill(tx[1], N)
     @test ty[2] == repeat(tx[2]', inner = (N, 1))
 end
+
+struct TestStruct{Ta, Tb}
+    a::Ta
+    b::Tb
+end
+
+t = StructTransformation(TestStruct, ArrayTransformation(REALCIRCLE, 2), LOGISTIC)
