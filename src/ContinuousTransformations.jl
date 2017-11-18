@@ -14,7 +14,7 @@ export
     Affine,
     Negation, NEGATION, Logistic, LOGISTIC, RealCircle, REALCIRCLE, Exp, EXP,
     Logit, LOGIT, InvRealCircle, INVREALCIRCLE, Log, LOG,
-    affine_bridge, default_transformation, transformation_to,
+    affine_bridge, default_transformation, bridge,
     ArrayTransformation, TransformationTuple, map_by_row,
     TransformLogLikelihood
 
@@ -581,6 +581,11 @@ isincreasing(c::ComposedTransformation) = isincreasing(c.f) == isincreasing(c.g)
 # calculated transformations
 ######################################################################
 
+"""
+    affine_bridge(interval1, interval1)
+
+Return an affine transformation between two intervals of the same type.
+"""
 function affine_bridge(x::Segment, y::Segment)
     α = width(y) / width(x)
     β = middle(y) - middle(x) * α
@@ -596,21 +601,27 @@ affine_bridge(x::PositiveRay, y::NegativeRay) =
 affine_bridge(x::NegativeRay, y::PositiveRay) =
     Affine(1, y.left + x.right) ∘ NEGATION
 
-default_transformation(::Segment) = REALCIRCLE
-default_transformation(::PositiveRay) = EXP
-default_transformation(::NegativeRay) = EXP
-default_transformation(::RealLine) = Affine(1, 0)
+"""
+    default_transformation(dom, img)
+
+Return a transformation from `dom` that can be mapped to `img` using
+`affine_bridge`.
+"""
+default_transformation(::RealLine, ::Segment) = REALCIRCLE
+default_transformation(::RealLine, ::PositiveRay) = EXP
+default_transformation(::RealLine, ::NegativeRay) = EXP
+default_transformation(::RealLine, ::RealLine) = Affine(1, 0)
 
 """
-    transformation_to(y, [transformation])
+    bridge(dom, img, [transformation])
 
-Return a transformation that maps ℝ (or ℝⁿ when applicable) to `y`. The second
-argument may be used to specify a particular transformation, otherwise
-`default_transformation` is used.
+Return a transformation that maps `dom` to `img`.
+
+The `transformation` argument may be used to specify a particular transformation
+family, otherwise `default_transformation` is used.
 """
-transformation_to(y::AbstractInterval,
-                  transformation = default_transformation(y)) =
-                      affine_bridge(image(transformation), y) ∘ transformation
+bridge(dom, img, t = default_transformation(dom, img)) =
+    affine_bridge(image(t), img) ∘ t
 
 ######################################################################
 # array transformations

@@ -280,17 +280,18 @@ end
     @test NEGATION(ℝ) == ℝ
 end
 
-function test_transformation_to(y)
-    @test @isinferred transformation_to(y)
-    t = transformation_to(y)
-    @test image(t) == y
+function test_bridge(dom, img)
+    @test @isinferred bridge(dom, img)
+    t = bridge(dom, img)
+    @test image(t) == img
+    @test domain(t) == dom
     test_univariate_random(t)
 end
 
 @testset "transformations to an interval" begin
-    test_transformation_to(Segment(1, 2))
-    test_transformation_to(PositiveRay(9.0))
-    test_transformation_to(NegativeRay(-7.0))
+    test_bridge(ℝ, Segment(1, 2))
+    test_bridge(ℝ, PositiveRay(9.0))
+    test_bridge(ℝ, NegativeRay(-7.0))
 end
 
 @testset "show" begin
@@ -304,7 +305,7 @@ end
     @test repr(Affine(1,0)) == "x ↦ x"
     @test repr(Affine(2,0)) == "x ↦ 2⋅x"
     @test repr(Affine(2,3)) == "x ↦ 2⋅x + 3"
-    @test repr(transformation_to(Segment(0,1))) == "x ↦ 0.5⋅realcircle(x) + 0.5"
+    @test repr(bridge(ℝ, Segment(0,1))) == "x ↦ 0.5⋅realcircle(x) + 0.5"
 end
 
 ######################################################################
@@ -346,8 +347,8 @@ function test_array_transformation(t, dims; N = 500)
 end
 
 @testset "array transformations" begin
-    test_array_transformation(transformation_to.(Segment(1,2)), (2,3))
-    test_array_transformation(transformation_to.(ℝ), (4,5))
+    test_array_transformation(bridge(ℝ, Segment(1,2)), (2,3))
+    test_array_transformation(bridge(ℝ, ℝ), (4,5))
     test_array_transformation(EXP, (3,7,2))
     test_array_transformation(REALCIRCLE, (3,2))
     @test_throws ArgumentError ArrayTransformation(EXP, -1, 2)
@@ -361,8 +362,9 @@ end
 ######################################################################
 
 @testset "transformation tuple univariate" begin
-    ts = transformation_to.((PositiveRay(1.0), NegativeRay(1.0), NegativeRay(1.0),
-                             ℝ, Segment(0.0,1.0)))
+    ts = bridge.(ℝ,
+                 (PositiveRay(1.0), NegativeRay(1.0), NegativeRay(1.0),
+                  ℝ, Segment(0.0,1.0)))
     tt = TransformationTuple(ts)
     @test length(tt) == sum(length, ts)
     @test image(tt) == image.(ts)
@@ -400,7 +402,7 @@ end
 end
 
 @testset "transformation tuple inference" begin
-    t = TransformationTuple((transformation_to(Segment(0.0,10.0)),
+    t = TransformationTuple((bridge(ℝ, Segment(0.0,10.0)),
                              ArrayTransformation(Affine(1,0), 2)))
     @test @isinferred t(ones(3))
     @test @isinferred logjac(t, ones(3))
@@ -408,7 +410,7 @@ end
 end
 
 @testset "transformation tuple by row" begin
-    t = TransformationTuple((transformation_to(Segment(0.0,10.0)),
+    t = TransformationTuple((bridge(ℝ, Segment(0.0,10.0)),
                              ArrayTransformation(Affine(1,0), 2)))
     x = randn(length(t))
     tx = t(x)
@@ -430,8 +432,8 @@ end
     ℓ2(x) = 2*log(x) - 0.3*x        # unnormalized Γ, on (0, ∞)
     ℓ(x1, x2) = ℓ1(x1) + ℓ2(x2)
 
-    t1 = transformation_to(Segment(0,1))
-    t2 = transformation_to(PositiveRay(0))
+    t1 = bridge(ℝ, Segment(0,1))
+    t2 = bridge(ℝ, PositiveRay(0))
     tℓ = TransformLogLikelihood((t1, t2), ℓ)
 
     for _ in 1:100
