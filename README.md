@@ -23,7 +23,7 @@ Log jacobian determinants and their log are useful for domain transformations in
 
 In addition, the package includes types to represent intervals, and some basic methods of working with them. The concept of intervals is slightly different from [IntervalSet.jl](https://github.com/JuliaMath/IntervalSets.jl) and [ValidatedNumerics.jl](https://github.com/dpsanders/ValidatedNumerics.jl), and as a result not compatible with either.
 
-The convenience function `transformation_to(image)` figures out the right transformation from `ℝ` (or `ℝⁿ`) to `image`. Currently implemented for intervals.
+The convenience function `bridge(dom, img)` figures out the right transformation from `dom` to `img`. Currently implemented for intervals.
 
 Examples:
 ```julia
@@ -38,6 +38,8 @@ image(t)           # Segment(0.0, 3.0)
 `ArrayTransformation(transformation, dimensions...)` transforms a vector of numbers to an array elementwise using `transformation`.
 
 `TransformationTuple(transformations)` can be used for heterogeneous collections of transformations.
+
+`TransformLogLikelihood` wraps a log likelihood function, transforming the domain and taking care of the Jacobian transformations.
 
 ## Planned
 
