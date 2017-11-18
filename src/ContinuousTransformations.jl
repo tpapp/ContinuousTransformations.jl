@@ -1,6 +1,5 @@
 module ContinuousTransformations
 
-using ArgCheck
 using AutoHashEquals
 using MacroTools
 using Parameters
@@ -109,7 +108,7 @@ The interval `[left, ∞]`.
 @auto_hash_equals struct PositiveRay{T <: Real} <: AbstractInterval
     left::T
     function PositiveRay{T}(left::T) where T
-        @argcheck isfinite(left) "Need finite endpoint."
+        isfinite(left) || throw(ArgumentError("Need finite endpoint."))
         new(left)
     end
 end
@@ -133,7 +132,7 @@ The interval `[-∞,right]`.
 @auto_hash_equals struct NegativeRay{T <: Real} <: AbstractInterval
     right::T
     function NegativeRay{T}(right::T) where T
-        @argcheck isfinite(right) "Need finite endpoint."
+        isfinite(right) || throw(ArgumentError("Need finite endpoint."))
         new(right)
     end
 end
@@ -158,8 +157,10 @@ The finite interval `[left, right]`, with ``-∞ < a < b < ∞`` enforced.
     left::T
     right::T
     function Segment{T}(left::T, right::T) where T
-        @argcheck isfinite(left) && isfinite(right) "Need finite endpoints."
-        @argcheck left < right "Need strictly increasing endpoints."
+        isfinite(left) && isfinite(right) ||
+            throw(ArgumentError("Need finite endpoints."))
+        left < right ||
+            throw(ArgumentError("Need strictly increasing endpoints."))
         new(left, right)
     end
 end
@@ -198,7 +199,8 @@ Helper function for forming a segment when possible. Internal, not exported.
 @inline function _maybe_segment(a, b)
     # NOTE Decided not to represent the empty interval, as it has no use in
     # the context of this package. Best to throw an error as soon as possible.
-    a < b ? Segment(a, b) : error("intersection of intervals is empty")
+    a < b ? Segment(a, b) :
+        throw(ArgumentError("intersection of intervals is empty"))
 end
 
 intersect(a::Segment, b::Segment) =
@@ -345,7 +347,7 @@ Mapping ``ℝ → ℝ`` using ``x ↦ α⋅x + β``. `α > 0` is enforced, see `
     α::T
     β::T
     function Affine{T}(α::T, β::T) where T
-        @argcheck α > 0 DomainError()
+        α > 0 || throw(DomainError())
         new(α, β)
     end
 end
@@ -624,7 +626,7 @@ struct ArrayTransformation{T <: UnivariateTransformation,
     transformation::T
     function ArrayTransformation(transformation::T,
                                  dims::Tuple{Vararg{Int64, N}}) where {T,N}
-        @argcheck all(dims .> 0) "Invalid dimensions."
+        all(dims .> 0) || throw(ArgumentError("Invalid dimensions."))
         new{T,dims}(transformation)
     end
 end
@@ -645,7 +647,7 @@ end
 (t::ArrayTransformation)(x) = reshape((t.transformation).(x), size(t))
 
 function logjac(t::ArrayTransformation, x)
-    @argcheck length(x) == length(t) DimensionMismatch
+    length(x) == length(t) || throw(DimensionMismatch())
     lj(x) = logjac(t.transformation, x)
     sum(lj, x)
 end
