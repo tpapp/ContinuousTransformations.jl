@@ -307,6 +307,10 @@ end
     @test repr(transformation_to(Segment(0,1))) == "x ↦ 0.5⋅realcircle(x) + 0.5"
 end
 
+######################################################################
+# array transformations
+######################################################################
+
 """
     rand_Inf!(x, [p])
 
@@ -351,6 +355,10 @@ end
     @test repr(ArrayTransformation(EXP, 2, 3)) == repr(EXP) * " for (2, 3) elements"
     @test repr(ArrayTransformation(EXP, 2)) == repr(EXP) * " for 2 elements"
 end
+
+######################################################################
+# transformation tuple
+######################################################################
 
 @testset "transformation tuple univariate" begin
     ts = transformation_to.((PositiveRay(1.0), NegativeRay(1.0), NegativeRay(1.0),
@@ -413,9 +421,21 @@ end
     @test ty[2] == repeat(tx[2]', inner = (N, 1))
 end
 
-struct TestStruct{Ta, Tb}
-    a::Ta
-    b::Tb
-end
+######################################################################
+# log likelihood transform
+######################################################################
 
-t = StructTransformation(TestStruct, ArrayTransformation(REALCIRCLE, 2), LOGISTIC)
+@testset "log likelihood transformation" begin
+    ℓ1(x) = 0.3*log(x) + 0.6*log(1-x) # unnormalized Beta, on (0, 1)
+    ℓ2(x) = 2*log(x) - 0.3*x        # unnormalized Γ, on (0, ∞)
+    ℓ(x1, x2) = ℓ1(x1) + ℓ2(x2)
+
+    t1 = transformation_to(Segment(0,1))
+    t2 = transformation_to(PositiveRay(0))
+    tℓ = TransformLogLikelihood((t1, t2), ℓ)
+
+    for _ in 1:100
+        x = randn(length(tℓ))
+        @test tℓ(x) ≈ ℓ(t1(x[1]), t2(x[2])) + logjac(t1, x[1]) + logjac(t2, x[2])
+    end
+end

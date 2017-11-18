@@ -15,7 +15,8 @@ export
     Negation, NEGATION, Logistic, LOGISTIC, RealCircle, REALCIRCLE, Exp, EXP,
     Logit, LOGIT, InvRealCircle, INVREALCIRCLE, Log, LOG,
     affine_bridge, default_transformation, transformation_to,
-    ArrayTransformation, TransformationTuple, map_by_row, StructTransformation
+    ArrayTransformation, TransformationTuple, map_by_row,
+    TransformLogLikelihood
 
 import Base:
     in, length, size, ∘, show, getindex, middle, linspace, intersect, extrema,
@@ -724,33 +725,35 @@ function map_by_row(t::TransformationTuple, x::AbstractMatrix)
 end
 
 ######################################################################
-# transformation to structures
+# loglikelihood wrapper
 ######################################################################
 
 """
-    StructTransformation(constructor, transformation)
+    TransformLogLikelihood(t::Union{Tuple, TransformationTuple}, ℓ)
 
+Return a callable that
 
+1. transforms its vector argument using a transformation tuple (or a tuple of
+transformations, converted as required) to a tuple of values,
+
+2. calls `ℓ` with these, which should return a scalar,
+
+3. returns the result above corrected by the log Jacobians.
+
+Useful when `ℓ` is a log-likelihood function with a restricted domain, and `t`
+is used to trasform to this domain from ``ℝⁿ``.
 """
-struct StructTransformation{Tconstructor,
-                            Ttransformation <: TransformationTuple} <:
-        ContinuousTransformation
-    constructor::Tconstructor
-    transformation::Ttransformation
+struct TransformLogLikelihood{T <: TransformationTuple, L} <: Function
+    transformation::T
+    loglikelihood::L
 end
 
-StructTransformation(constructor, ts::ContinuousTransformation...) =
-    StructTransformation(constructor, TransformationTuple(ts))
+TransformLogLikelihood(T::Tuple, L) =
+    TransformLogLikelihood(TransformationTuple(T), L)
 
-@forward StructTransformation.transformation domain, length
+@forward TransformLogLikelihood.transformation length
 
-image(t::StructTransformation) = t.result_type
+(f::TransformLogLikelihood)(x) =
+    f.loglikelihood(f.transformation(x)...) + logjac(f.transformation, x)
 
-(t::StructTransformation)(x) = t.constructor(t.transformation(x)...)
-
-logjac(t::StructTransformation, x) = logjac(t.transformation, x)
-
-transformation_string(t::StructTransformation, x) =
-    string(t.constructor) * repr(t.transformation.transformations)
-
-end # module
+end
