@@ -11,7 +11,7 @@ export
     AbstractInterval, RealLine, ℝ, PositiveRay, ℝ⁺, NegativeRay, ℝ⁻,
     Segment, width,
     UnivariateTransformation, domain, image, isincreasing, inverse, logjac,
-    Affine,
+    Affine, IDENTITY,
     Negation, NEGATION, Logistic, LOGISTIC, RealCircle, REALCIRCLE, Exp, EXP,
     Logit, LOGIT, InvRealCircle, INVREALCIRCLE, Log, LOG,
     affine_bridge, default_transformation, bridge,
@@ -356,6 +356,9 @@ end
 Affine(α::T, β::T) where T = Affine{T}(α, β)
 Affine(α, β) = Affine(promote(α, β)...)
 
+"Identity (as an affine transformation)."
+const IDENTITY = Affine(1, 0)
+
 domain(::Affine) = ℝ
 image(::Affine) = ℝ
 (t::Affine)(x) = _fma(x, t.α, t.β)
@@ -570,6 +573,9 @@ end
 
 inverse(t::ComposedTransformation, x) = inverse(t.g, inverse(t.f, x))
 
+inverse(t::ComposedTransformation) =
+    ComposedTransformation(inverse(t.g), inverse(t.f))
+
 isincreasing(c::ComposedTransformation) = isincreasing(c.f) == isincreasing(c.g)
 
 ∘(f::UnivariateTransformation, g::UnivariateTransformation) =
@@ -592,7 +598,7 @@ function affine_bridge(x::Segment, y::Segment)
     Affine(α, β)
 end
 
-affine_bridge(::RealLine, ::RealLine) = Affine(1, 0)
+affine_bridge(::RealLine, ::RealLine) = IDENTITY
 
 affine_bridge(x::PositiveRay, y::PositiveRay) = Affine(1, y.left - x.left)
 affine_bridge(x::NegativeRay, y::NegativeRay) = Affine(1, y.right - x.right)
@@ -610,7 +616,11 @@ Return a transformation from `dom` that can be mapped to `img` using
 default_transformation(::RealLine, ::Segment) = REALCIRCLE
 default_transformation(::RealLine, ::PositiveRay) = EXP
 default_transformation(::RealLine, ::NegativeRay) = EXP
-default_transformation(::RealLine, ::RealLine) = Affine(1, 0)
+default_transformation(::RealLine, ::RealLine) = IDENTITY
+
+default_transformation(::Segment, ::RealLine) = INVREALCIRCLE
+default_transformation(::PositiveRay, ::RealLine) = LOG
+default_transformation(::NegativeRay, ::RealLine) = LOG
 
 """
     bridge(dom, img, [transformation])
@@ -620,8 +630,13 @@ Return a transformation that maps `dom` to `img`.
 The `transformation` argument may be used to specify a particular transformation
 family, otherwise `default_transformation` is used.
 """
-bridge(dom, img, t = default_transformation(dom, img)) =
+bridge(dom::RealLine, img, t = default_transformation(dom, img)) =
     affine_bridge(image(t), img) ∘ t
+
+bridge(dom, img::RealLine, t = default_transformation(dom, img)) =
+    t ∘ affine_bridge(dom, domain(t))
+
+bridge(::RealLine, ::RealLine) = IDENTITY
 
 ######################################################################
 # array transformations

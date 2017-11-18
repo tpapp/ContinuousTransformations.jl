@@ -30,7 +30,7 @@ end
 
 rand_in(ray::PositiveRay) = ray.left + randn()^2
 
-rand_in(ray::NegativeRay) = ray.left + randn()^2
+rand_in(ray::NegativeRay) = ray.right - randn()^2
 
 rand_in(::RealLine) = randn()
 
@@ -198,7 +198,7 @@ end
 end
 
 """
-    test_univariate_scalar(f, x; [AD_exceptions::Dict])
+    test_univariate(f, x; [AD_exceptions::Dict])
 
 Test univariate transformation `f` with `x`. Tests for:
 
@@ -288,10 +288,14 @@ function test_bridge(dom, img)
     test_univariate_random(t)
 end
 
-@testset "transformations to an interval" begin
+@testset "bridge tests" begin
     test_bridge(ℝ, Segment(1, 2))
     test_bridge(ℝ, PositiveRay(9.0))
     test_bridge(ℝ, NegativeRay(-7.0))
+    test_bridge(ℝ, ℝ)
+    test_bridge(Segment(1,2), ℝ)
+    test_bridge(PositiveRay(9.0), ℝ)
+    test_bridge(NegativeRay(-7.0), ℝ)
 end
 
 @testset "show" begin
