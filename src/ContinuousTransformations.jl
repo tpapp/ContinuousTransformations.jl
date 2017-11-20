@@ -367,7 +367,6 @@ inverse(t::Affine) = Affine(1/t.α, -t.β/t.α)
 isincreasing(t::Affine) = true
 
 RR_stability(::Affine) = RRStable()
-inverse(t::Affine) = Affine(1/t.α, -t.β/t.α)
 
 (t::Affine)(x::Segment) = Segment(t(x.left), t(x.right))
 (t::Affine)(x::PositiveRay) = PositiveRay(t(x.left))
@@ -401,8 +400,6 @@ RR_stability(::Negation) = RRStable()
 (::Negation)(x::PositiveRay) = NegativeRay(-x.left)
 (::Negation)(x::NegativeRay) = PositiveRay(-x.right)
 (::Negation)(::RealLine) = ℝ
-
-inverse(::Negation) = NEGATION
 
 rhs_string(::Negation, term) = "-" * term
 
