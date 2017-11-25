@@ -440,6 +440,8 @@ end
     t2 = bridge(ℝ, PositiveRay(0))
     tℓ = TransformLogLikelihood((t1, t2), ℓ)
 
+    @test get_transformation(tℓ) == TransformationTuple(t1, t2)
+
     for _ in 1:100
         x = randn(length(tℓ))
         @test tℓ(x) ≈ ℓ(t1(x[1]), t2(x[2])) + logjac(t1, x[1]) + logjac(t2, x[2])

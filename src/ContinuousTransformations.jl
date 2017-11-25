@@ -16,7 +16,7 @@ export
     Logit, LOGIT, InvRealCircle, INVREALCIRCLE, Log, LOG,
     affine_bridge, default_transformation, bridge,
     ArrayTransformation, TransformationTuple, map_by_row,
-    TransformLogLikelihood
+    TransformLogLikelihood, get_transformation
 
 import Base:
     in, length, size, ∘, show, getindex, middle, linspace, intersect, extrema,
@@ -687,10 +687,13 @@ image(t::ArrayTransformation) = fill(image(t.transformation), size(t))
 # transformation tuple
 ######################################################################
 
-struct TransformationTuple{T <: Tuple{Vararg{ContinuousTransformation}}} <:
-    ContinuousTransformation
+@auto_hash_equals struct
+    TransformationTuple{T <: Tuple{Vararg{ContinuousTransformation}}} <:
+        ContinuousTransformation
     transformations::T
 end
+
+TransformationTuple(ts::ContinuousTransformation...) = TransformationTuple(ts)
 
 transformation_string(t::TransformationTuple, x) =
     "TransformationTuple" * repr(t.transformations)
@@ -778,5 +781,7 @@ TransformLogLikelihood(T::Tuple, L) =
 
 (f::TransformLogLikelihood)(x) =
     f.loglikelihood(f.transformation(x)...) + logjac(f.transformation, x)
+
+get_transformation(d::TransformLogLikelihood) = d.transformation
 
 end
