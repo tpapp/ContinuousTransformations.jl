@@ -307,8 +307,8 @@ end
     @test repr(LOGIT) == "x ↦ logit(x)"
     @test repr(NEGATION) == "x ↦ -x"
     @test repr(Affine(1,0)) == "x ↦ x"
-    @test repr(Affine(2,0)) == "x ↦ 2⋅x"
-    @test repr(Affine(2,3)) == "x ↦ 2⋅x + 3"
+    @test repr(Affine(2,0)) == "x ↦ 2.0⋅x"
+    @test repr(Affine(2,3)) == "x ↦ 2.0⋅x + 3.0"
     @test repr(bridge(ℝ, Segment(0,1))) == "x ↦ 0.5⋅realcircle(x) + 0.5"
 end
 
