@@ -372,7 +372,13 @@ end
     tt = TransformationTuple(ts)
     @test length(tt) == sum(length, ts)
     @test image(tt) == image.(ts)
-    @test repr(tt) == "TransformationTuple" * repr(ts)
+    @test repr(tt) == """
+TransformationTuple
+    x[1] ↦ exp(x[1]) + 1.0
+    x[2] ↦ -exp(x[2]) + 1.0
+    x[3] ↦ -exp(x[3]) + 1.0
+    x[4] ↦ x[4]
+    x[5] ↦ 0.5⋅realcircle(x[5]) + 0.5"""
     for i in 1:length(ts)
         @test tt[i] == ts[i]
     end
@@ -391,7 +397,10 @@ end
     tt = TransformationTuple(ts)
     @test length(tt) == sum(length, ts) == 3
     @test image(tt) == image.(ts)
-    @test repr(tt) == "TransformationTuple" * repr(ts)
+    @test repr(tt) == """
+TransformationTuple
+    x[1] ↦ exp(x[1])
+    x[2:3] ↦ realcircle(x[2:3]) for 2 elements"""
     for i in 1:length(ts)
         @test tt[i] == ts[i]
     end
@@ -406,16 +415,16 @@ end
 end
 
 @testset "transformation tuple inference" begin
-    t = TransformationTuple((bridge(ℝ, Segment(0.0,10.0)),
-                             ArrayTransformation(Affine(1,0), 2)))
+    t = TransformationTuple(bridge(ℝ, Segment(0.0,10.0)),
+                            ArrayTransformation(Affine(1,0), 2))
     @test @isinferred t(ones(3))
     @test @isinferred logjac(t, ones(3))
     @test @isinferred inverse(t, (1.0, ones(2)))
 end
 
 @testset "transformation tuple by row" begin
-    t = TransformationTuple((bridge(ℝ, Segment(0.0,10.0)),
-                             ArrayTransformation(Affine(1,0), 2)))
+    t = TransformationTuple(bridge(ℝ, Segment(0.0,10.0)),
+                            ArrayTransformation(Affine(1,0), 2))
     x = randn(length(t))
     tx = t(x)
     N = 100
@@ -438,7 +447,7 @@ end
 
     t1 = bridge(ℝ, Segment(0,1))
     t2 = bridge(ℝ, PositiveRay(0))
-    tℓ = TransformLogLikelihood((t1, t2), ℓ)
+    tℓ = TransformLogLikelihood(ℓ, t1, t2)
 
     @test get_transformation(tℓ) == TransformationTuple(t1, t2)
 
@@ -446,4 +455,9 @@ end
         x = randn(length(tℓ))
         @test tℓ(x) ≈ ℓ(t1(x[1]), t2(x[2])) + logjac(t1, x[1]) + logjac(t2, x[2])
     end
+
+    @test repr(tℓ) == """
+TransformLogLikelihood of length 2, with TransformationTuple
+    x[1] ↦ 0.5⋅realcircle(x[1]) + 0.5
+    x[2] ↦ exp(x[2])"""
 end

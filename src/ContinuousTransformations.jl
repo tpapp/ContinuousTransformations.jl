@@ -375,8 +375,8 @@ RR_stability(::Affine) = RRStable()
 
 function rhs_string(t::Affine, term)
     @unpack α, β = t
-    α == 1 || (term = "$(α)⋅" * term)
-    β == 0 || (term = term * " + $(β)")
+    α == 1 || (term = "$(signif(α, 4))⋅" * term)
+    β == 0 || (term = term * " + $(signif(β, 4))")
     term
 end
 
@@ -687,6 +687,13 @@ image(t::ArrayTransformation) = fill(image(t.transformation), size(t))
 # transformation tuple
 ######################################################################
 
+"""
+    TransformationTuple(tuple_of_transformations)
+    TransformationTuple(transformations...)
+
+A tuple of transformations. Given a vector of matching length, each takes as
+many reals as needed, and returns the result as a tuple.
+"""
 @auto_hash_equals struct
     TransformationTuple{T <: Tuple{Vararg{ContinuousTransformation}}} <:
         ContinuousTransformation
@@ -695,8 +702,16 @@ end
 
 TransformationTuple(ts::ContinuousTransformation...) = TransformationTuple(ts)
 
-transformation_string(t::TransformationTuple, x) =
-    "TransformationTuple" * repr(t.transformations)
+function transformation_string(t::TransformationTuple, x)
+    s = IOBuffer()
+    print(s, "TransformationTuple")
+    for (tt, ix) in zip(t.transformations,
+                        transformation_indexes(t.transformations))
+        print(s, "\n    ")
+        print(s, transformation_string(tt, "$(x)[$(ix)]"))
+    end
+    String(take!(s))
+end
 
 length(t::TransformationTuple) = sum(length(t) for t in t.transformations)
 
@@ -755,7 +770,8 @@ end
 ######################################################################
 
 """
-    TransformLogLikelihood(t::Union{Tuple, TransformationTuple}, ℓ)
+    TransformLogLikelihood(ℓ, t::Union{Tuple, TransformationTuple})
+    TransformLogLikelihood(ℓ, transformations...)
 
 Return a callable that
 
@@ -769,13 +785,16 @@ transformations, converted as required) to a tuple of values,
 Useful when `ℓ` is a log-likelihood function with a restricted domain, and `t`
 is used to trasform to this domain from ``ℝⁿ``.
 """
-struct TransformLogLikelihood{T <: TransformationTuple, L} <: Function
-    transformation::T
+struct TransformLogLikelihood{L, T <: TransformationTuple}
     loglikelihood::L
+    transformation::T
 end
 
-TransformLogLikelihood(T::Tuple, L) =
-    TransformLogLikelihood(TransformationTuple(T), L)
+TransformLogLikelihood(L, T::Tuple) =
+    TransformLogLikelihood(L, TransformationTuple(T))
+
+TransformLogLikelihood(L, ts::ContinuousTransformation...) =
+    TransformLogLikelihood(L, TransformationTuple(ts))
 
 @forward TransformLogLikelihood.transformation length
 
@@ -783,5 +802,10 @@ TransformLogLikelihood(T::Tuple, L) =
     f.loglikelihood(f.transformation(x)...) + logjac(f.transformation, x)
 
 get_transformation(d::TransformLogLikelihood) = d.transformation
+
+function show(io::IO, f::TransformLogLikelihood)
+    print(io, "TransformLogLikelihood of length $(length(f)), with ")
+    print(io, f.transformation)
+end
 
 end
