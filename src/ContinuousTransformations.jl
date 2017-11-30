@@ -1,6 +1,7 @@
 module ContinuousTransformations
 
 using AutoHashEquals
+using DocStringExtensions
 using MacroTools
 using Parameters
 using StatsFuns
@@ -25,12 +26,13 @@ import Base:
 # disabled until https://github.com/JuliaDiff/ForwardDiff.jl/issues/261 is fixed
 # const log1p = Base.Math.JuliaLibm.log1p # should be faster and more accurate?
 
-######################################################################
+
+
 # utilities
-######################################################################
+
 
 """
-    define_isapprox(T, fields...)
+    $SIGNATURES
 
 Define an `isapprox` method, comparing the given fields in type `T`.
 """
@@ -46,6 +48,7 @@ macro define_isapprox(T, fields...)
 end
 
 """
+
 Define a singleton type with the given name and supertype (specified
 as `name <: supertype`), and a constant which defaults to the name in
 uppercase.
@@ -69,159 +72,10 @@ https://github.com/JuliaDiff/ReverseDiff.jl/issues/86 is fixed.
 """
 _fma(x, y, z) = x*y+z
 
-######################################################################
-# intervals
-######################################################################
 
-abstract type AbstractInterval end
-
-isinf(x::AbstractInterval) = !isfinite(x)
-
-isapprox(::AbstractInterval, ::AbstractInterval; rtol=√eps(), atol=0) = false
-
-extrema(x::AbstractInterval) = minimum(x), maximum(x)
-
-"""
-    RealLine()
-
-The (extended) real line [-∞,∞]. Use the constant ℝ.
-"""
-struct RealLine <: AbstractInterval end
-
-isapprox(::RealLine, ::RealLine; rtol=√eps(), atol=0) = true
-
-show(io::IO, ::RealLine) = print(io, "ℝ")
-
-const ℝ = RealLine()
-
-in(x::Real, ::RealLine) = true
-
-minimum(::RealLine) = -Inf
-maximum(::RealLine) = Inf
-
-isfinite(::RealLine) = false
-
-"""
-    PositiveRay(left)
-
-The interval `[left, ∞]`.
-"""
-@auto_hash_equals struct PositiveRay{T <: Real} <: AbstractInterval
-    left::T
-    function PositiveRay{T}(left::T) where T
-        isfinite(left) || throw(ArgumentError("Need finite endpoint."))
-        new(left)
-    end
-end
-
-PositiveRay{T}(left::T) = PositiveRay{T}(left)
-
-in(x::Real, ray::PositiveRay) = ray.left ≤ x
-minimum(ray::PositiveRay) = ray.left
-maximum(::PositiveRay{T}) where T = T(Inf)
-isfinite(::PositiveRay) = false
-
-const ℝ⁺ = PositiveRay(0.0)
-
-@define_isapprox PositiveRay left
-
-"""
-    NegativeRay(right)
-
-The interval `[-∞,right]`.
-"""
-@auto_hash_equals struct NegativeRay{T <: Real} <: AbstractInterval
-    right::T
-    function NegativeRay{T}(right::T) where T
-        isfinite(right) || throw(ArgumentError("Need finite endpoint."))
-        new(right)
-    end
-end
-
-NegativeRay{T}(right::T) = NegativeRay{T}(right)
-
-in(x::Real, ray::NegativeRay) = x ≤ ray.right
-minimum(::NegativeRay{T}) where T = -T(Inf)
-maximum(ray::NegativeRay) = ray.right
-isfinite(::NegativeRay) = false
-
-const ℝ⁻ = NegativeRay(0.0)
-
-@define_isapprox NegativeRay right
-
-"""
-    Segment(left, right)
-
-The finite interval `[left, right]`, with ``-∞ < a < b < ∞`` enforced.
-"""
-@auto_hash_equals struct Segment{T <: Real} <: AbstractInterval
-    left::T
-    right::T
-    function Segment{T}(left::T, right::T) where T
-        isfinite(left) && isfinite(right) ||
-            throw(ArgumentError("Need finite endpoints."))
-        left < right ||
-            throw(ArgumentError("Need strictly increasing endpoints."))
-        new(left, right)
-    end
-end
-
-Segment{T <: Real}(left::T, right::T) = Segment{T}(left, right)
-
-Segment(left::Real, right::Real) = Segment(promote(left, right)...)
-
-in(x::Real, s::Segment) = s.left ≤ x ≤ s.right
-minimum(s::Segment) = s.left
-maximum(s::Segment) = s.right
-isfinite(::Segment) = true
-
-@define_isapprox Segment left right
-
-width(s::Segment) = s.right - s.left
-middle(s::Segment) = middle(s.left, s.right)
-linspace(s::Segment, n = 50) = linspace(s.left, s.right, n)
-
-
-######################################################################
-# intersections
-######################################################################
-
-## general fallback method. define specific methods with the following
-## argument ordering Segment < PositiveRay < NegativeRay < RealLine < all
-intersect(a::AbstractInterval, b::AbstractInterval) = intersect(b, a)
-
-intersect(a::RealLine, b::AbstractInterval) = b
-
-"""
-    _maybe_segment(a, b)
-
-Helper function for forming a segment when possible. Internal, not exported.
-"""
-@inline function _maybe_segment(a, b)
-    # NOTE Decided not to represent the empty interval, as it has no use in
-    # the context of this package. Best to throw an error as soon as possible.
-    a < b ? Segment(a, b) :
-        throw(ArgumentError("intersection of intervals is empty"))
-end
-
-intersect(a::Segment, b::Segment) =
-    _maybe_segment(max(a.left, b.left), min(a.right, b.right))
-
-intersect(a::Segment, b::PositiveRay) =
-    _maybe_segment(max(b.left, a.left), a.right)
-
-intersect(a::Segment, b::NegativeRay) =
-    _maybe_segment(a.left, min(a.right, b.right))
-
-intersect(a::PositiveRay, b::PositiveRay) = PositiveRay(max(a.left, b.left))
-
-intersect(a::PositiveRay, b::NegativeRay) = _maybe_segment(a.left, b.right)
-
-intersect(a::NegativeRay, b::NegativeRay) = NegativeRay(min(a.right, b.right))
-
-######################################################################
+
 # abstract interface for transformations
-######################################################################
+
 
 """
     logjac(t, x)
@@ -238,8 +92,7 @@ Return ``t⁻¹(x)``.
 
     inverse(t)
 
-Return ``t⁻¹``. Note that while `inverse(t, x)` is always defined, not all
-transformations have an explicit inverse.
+Return the transformation ``t⁻¹``.
 """
 inverse(t, x) = inverse(t)(x)
 
@@ -277,6 +130,181 @@ show(io::IO, ::MIME"text/plain", t::ContinuousTransformation) =
 
 show(io::IO, t::ContinuousTransformation) =
     print(io, transformation_string(t, "x"))
+
+"""
+    bridge(dom, img, [transformation])
+
+Return a transformation that maps `dom` to `img`.
+
+The `transformation` argument may be used to specify a particular transformation
+family, otherwise `default_transformation` is used.
+"""
+function bridge end
+
+
+
+# intervals
+
+"""
+Abstract supertype for all univariate intervals. It is not specified whether
+they are open or closed.
+"""
+abstract type AbstractInterval end
+
+isinf(x::AbstractInterval) = !isfinite(x)
+
+isapprox(::AbstractInterval, ::AbstractInterval; rtol=√eps(), atol=0) = false
+
+extrema(x::AbstractInterval) = minimum(x), maximum(x)
+
+"""
+    RealLine()
+
+The real line. Use the constant [`ℝ`](@ref).
+"""
+struct RealLine <: AbstractInterval end
+
+isapprox(::RealLine, ::RealLine; rtol=√eps(), atol=0) = true
+
+show(io::IO, ::RealLine) = print(io, "ℝ")
+
+"A constant for the real line."
+const ℝ = RealLine()
+
+in(x::Real, ::RealLine) = true
+
+minimum(::RealLine) = -Inf
+maximum(::RealLine) = Inf
+
+isfinite(::RealLine) = false
+
+"""
+    PositiveRay(left)
+
+The real numbers above `left`. See [`ℝ⁺`](@ref).
+"""
+@auto_hash_equals struct PositiveRay{T <: Real} <: AbstractInterval
+    left::T
+    function PositiveRay{T}(left::T) where T
+        isfinite(left) || throw(ArgumentError("Need finite endpoint."))
+        new(left)
+    end
+end
+
+PositiveRay{T}(left::T) = PositiveRay{T}(left)
+
+in(x::Real, ray::PositiveRay) = ray.left ≤ x
+minimum(ray::PositiveRay) = ray.left
+maximum(::PositiveRay{T}) where T = T(Inf)
+isfinite(::PositiveRay) = false
+
+"The positive real numbers."
+const ℝ⁺ = PositiveRay(0.0)
+
+@define_isapprox PositiveRay left
+
+"""
+    NegativeRay(right)
+
+The real numbers below `right`. See [`ℝ⁻`](@ref).
+"""
+@auto_hash_equals struct NegativeRay{T <: Real} <: AbstractInterval
+    right::T
+    function NegativeRay{T}(right::T) where T
+        isfinite(right) || throw(ArgumentError("Need finite endpoint."))
+        new(right)
+    end
+end
+
+NegativeRay{T}(right::T) = NegativeRay{T}(right)
+
+in(x::Real, ray::NegativeRay) = x ≤ ray.right
+minimum(::NegativeRay{T}) where T = -T(Inf)
+maximum(ray::NegativeRay) = ray.right
+isfinite(::NegativeRay) = false
+
+"A negative real numbers."
+const ℝ⁻ = NegativeRay(0.0)
+
+@define_isapprox NegativeRay right
+
+"""
+    Segment(left, right)
+
+The real numbers between `left` and `right`, with
+``-∞ < \\text{left} < \\text{right} < ∞`` enforced.
+"""
+@auto_hash_equals struct Segment{T <: Real} <: AbstractInterval
+    left::T
+    right::T
+    function Segment{T}(left::T, right::T) where T
+        isfinite(left) && isfinite(right) ||
+            throw(ArgumentError("Need finite endpoints."))
+        left < right ||
+            throw(ArgumentError("Need strictly increasing endpoints."))
+        new(left, right)
+    end
+end
+
+Segment{T <: Real}(left::T, right::T) = Segment{T}(left, right)
+
+Segment(left::Real, right::Real) = Segment(promote(left, right)...)
+
+in(x::Real, s::Segment) = s.left ≤ x ≤ s.right
+minimum(s::Segment) = s.left
+maximum(s::Segment) = s.right
+isfinite(::Segment) = true
+
+@define_isapprox Segment left right
+
+"""
+    $SIGNATURES
+
+Width of a finite interval.
+"""
+width(s::Segment) = s.right - s.left
+
+middle(s::Segment) = middle(s.left, s.right)
+
+linspace(s::Segment, n = 50) = linspace(s.left, s.right, n)
+
+
+
+# intersections
+
+## general fallback method. define specific methods with the following
+## argument ordering Segment < PositiveRay < NegativeRay < RealLine < all
+intersect(a::AbstractInterval, b::AbstractInterval) = intersect(b, a)
+
+intersect(a::RealLine, b::AbstractInterval) = b
+
+"""
+    _maybe_segment(a, b)
+
+Helper function for forming a segment when possible. Internal, not exported.
+"""
+@inline function _maybe_segment(a, b)
+    # NOTE Decided not to represent the empty interval, as it has no use in
+    # the context of this package. Best to throw an error as soon as possible.
+    a < b ? Segment(a, b) :
+        throw(ArgumentError("intersection of intervals is empty"))
+end
+
+intersect(a::Segment, b::Segment) =
+    _maybe_segment(max(a.left, b.left), min(a.right, b.right))
+
+intersect(a::Segment, b::PositiveRay) =
+    _maybe_segment(max(b.left, a.left), a.right)
+
+intersect(a::Segment, b::NegativeRay) =
+    _maybe_segment(a.left, min(a.right, b.right))
+
+intersect(a::PositiveRay, b::PositiveRay) = PositiveRay(max(a.left, b.left))
+
+intersect(a::PositiveRay, b::NegativeRay) = _maybe_segment(a.left, b.right)
+
+intersect(a::NegativeRay, b::NegativeRay) = NegativeRay(min(a.right, b.right))
+
 
 ######################################################################
 # univariate transformations
@@ -619,14 +647,6 @@ default_transformation(::Segment, ::RealLine) = INVREALCIRCLE
 default_transformation(::PositiveRay, ::RealLine) = LOG
 default_transformation(::NegativeRay, ::RealLine) = LOG
 
-"""
-    bridge(dom, img, [transformation])
-
-Return a transformation that maps `dom` to `img`.
-
-The `transformation` argument may be used to specify a particular transformation
-family, otherwise `default_transformation` is used.
-"""
 bridge(dom::RealLine, img, t = default_transformation(dom, img)) =
     affine_bridge(image(t), img) ∘ t
 

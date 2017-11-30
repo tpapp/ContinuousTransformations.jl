@@ -2,3 +2,5 @@
 *.jl.*.cov
 *.jl.mem
 /test/sandbox.jl
+/docs/site
+/docs/build

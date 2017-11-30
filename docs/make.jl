@@ -1,0 +1,19 @@
+using Documenter, ContinuousTransformations
+
+makedocs(modules = [ContinuousTransformations],
+         format = :html,
+         clean = true,
+         sitename = "ContinuousTransformations.jl",
+         authors = "Tamás K. Papp",
+         html_prettyurls = haskey(ENV, "TRAVIS"), # clean URLs building on Travis
+         pages = [
+             "Overview" => "index.md",
+             "General API" => "general.md",
+             "Intervals and univariate transformations" => "univariate.md",
+         ])
+
+deploydocs(repo = "github.com/tpapp/ContinuousTransformations.jl.git",
+           target = "build",
+           deps = nothing,
+           make = nothing,
+           julia = "0.6")
