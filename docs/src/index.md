@@ -28,7 +28,7 @@ y = \left(x - \frac{a+b}2\right)\cdot\frac{b-a}2
 ```
 but calculating these things manually is tedious and error prone.
 
-### Example: transformed multivariate noemal
+### Example: transformed multivariate normal
 
 You want to characterize the joint distribution of some quantities
 
@@ -44,7 +44,7 @@ z \sim N(\mu, \Sigma)
 
 and then transform ``z_1`` to ``x``, and ``z_2`` to ``y`` such that the constraints above hold.
 
-### Example: domain trasnformation for MCMC
+### Example: domain transformation for MCMC
 
 You are using Bayesian statistics to estimate a model with a posterior that has constraints, eg for a variance ``\sigma > 0`` is required. You have an [algorithm](https://github.com/tpapp/DynamicHMC.jl) that can perform efficient MCMC for a log posterior
 
