@@ -25,17 +25,17 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "#Example:-transformed-multivariate-noemal-1",
+    "location": "#Example:-transformed-multivariate-normal-1",
     "page": "Overview",
-    "title": "Example: transformed multivariate noemal",
+    "title": "Example: transformed multivariate normal",
     "category": "section",
     "text": "You want to characterize the joint distribution of some quantitiesx ge 0quad a le y le bfor a statistical problem. A frequently used approach is to generate a multivariate normalz sim N(mu Sigma)and then transform z_1 to x, and z_2 to y such that the constraints above hold."
 },
 
 {
-    "location": "#Example:-domain-trasnformation-for-MCMC-1",
+    "location": "#Example:-domain-transformation-for-MCMC-1",
     "page": "Overview",
-    "title": "Example: domain trasnformation for MCMC",
+    "title": "Example: domain transformation for MCMC",
     "category": "section",
     "text": "You are using Bayesian statistics to estimate a model with a posterior that has constraints, eg for a variance sigma  0 is required. You have an algorithm that can perform efficient MCMC for a log posteriorell mathbbR^n to mathbbRbut to apply it, you need to transform from mathbbR to (0 infty). The log posterior should be adjusted by the log determinant of the transformation's Jacobian.This package can help you with all of these."
 },
