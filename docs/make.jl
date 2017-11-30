@@ -10,6 +10,7 @@ makedocs(modules = [ContinuousTransformations],
              "Overview" => "index.md",
              "General API" => "general.md",
              "Intervals and univariate transformations" => "univariate.md",
+             "Internals" => "internals.md"
          ])
 
 deploydocs(repo = "github.com/tpapp/ContinuousTransformations.jl.git",

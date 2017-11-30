@@ -223,7 +223,7 @@ minimum(::NegativeRay{T}) where T = -T(Inf)
 maximum(ray::NegativeRay) = ray.right
 isfinite(::NegativeRay) = false
 
-"A negative real numbers."
+"The negative real numbers."
 const ℝ⁻ = NegativeRay(0.0)
 
 @define_isapprox NegativeRay right
@@ -279,7 +279,7 @@ intersect(a::AbstractInterval, b::AbstractInterval) = intersect(b, a)
 intersect(a::RealLine, b::AbstractInterval) = b
 
 """
-    _maybe_segment(a, b)
+    $SIGNATURES
 
 Helper function for forming a segment when possible. Internal, not exported.
 """
@@ -329,30 +329,30 @@ Return `true` (`false`), when the transformation is monotonically increasing
 function isincreasing end
 
 """
-Trait that is useful for domain and image calculations. See `RRStable`.
+Trait that is useful for domain and image calculations. See [`RRStable`](@ref).
 """
 abstract type RRStability end
 
 """
 Trait that indicates that a univariate transformation
 
-1. maps ℝ to ℝ,
+1. maps ``ℝ`` to ``ℝ``,
 
 2. supports mapping intervals, and
 
-3. maps subtypes of AbstractInterval to the same type.
+3. maps subtypes of [`AbstractInterval`](@ref) to the same type.
 """
 struct RRStable <: RRStability end
 
 """
-Trait that indicates that a univariate transformation is *not* `RRStable`.
+Trait that indicates that a univariate transformation is *not* [`RRStable`](@ref).
 """
 struct NotRRStable <: RRStability end
 
 """
-    RR_stability(::UnivariateTransformation)
+    $SIGNATURES
 
-Return either the trait `RRStable` and `NotRRStable`.
+Return either the trait [`RRStable`](@ref) and `NotRRStable`.
 """
 RR_stability(::UnivariateTransformation) = NotRRStable()
 
@@ -370,7 +370,9 @@ RR_stability(::UnivariateTransformation) = NotRRStable()
 """
     Affine(α, β)
 
-Mapping ``ℝ → ℝ`` using ``x ↦ α⋅x + β``. `α > 0` is enforced, see `Negation`.
+Mapping ``ℝ → ℝ`` using ``x ↦ α⋅x + β``.
+
+``α > 0`` is enforced, see [`Negation`](@ref).
 """
 @auto_hash_equals struct Affine{T <: Real} <: UnivariateTransformation
     α::T
@@ -438,7 +440,7 @@ rhs_string(::Negation, term) = "-" * term
 """
     Logistic()
 
-Mapping ``ℝ → (0,1)`` using ``x ↦ 1/(1+exp(-x))``.
+Mapping ``ℝ → (0,1)`` using ``x ↦ 1/(1+\\exp(-x))``.
 """
 @define_singleton Logistic <: UnivariateTransformation
 
@@ -470,7 +472,7 @@ rhs_string(::RealCircle, term) = "realcircle($term)"
 """
     Exp()
 
-Mapping ``ℝ → ℝ⁺`` using ``x ↦ exp(x)``.
+Mapping ``ℝ → ℝ⁺`` using ``x ↦ \\exp(x)``.
 """
 @define_singleton Exp <: UnivariateTransformation
 
@@ -490,7 +492,7 @@ rhs_string(::Exp, term) = "exp($term)"
 """
     Logit()
 
-Mapping ``(0,1) → ℝ`` using ``x ↦ log(x/(1-x))``.
+Mapping ``(0,1) → ℝ`` using ``x ↦ \\log(x/(1-x))``.
 """
 @define_singleton Logit <: UnivariateTransformation
 
@@ -522,7 +524,7 @@ rhs_string(::InvRealCircle, term) = "realcircle⁻¹($term)"
 """
     Log()
 
-Mapping ``ℝ → ℝ⁺`` using ``x ↦ exp(x)``.
+Mapping ``ℝ → ℝ⁺`` using ``x ↦ \\exp(x)``.
 """
 @define_singleton Log <: UnivariateTransformation
 

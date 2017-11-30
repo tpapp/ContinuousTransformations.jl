@@ -9,6 +9,7 @@ RealLine
 PositiveRay
 ℝ⁺
 NegativeRay
+ℝ⁻
 Segment
 ```
 
@@ -21,3 +22,29 @@ width
 ```
 
 # [Univariate transformations](@id univariate-transformations)
+
+## General interface
+
+```@docs
+UnivariateTransformation
+isincreasing
+```
+
+## Specific transformations
+
+```@docs
+Affine
+Negation
+Logistic
+Exp
+Logit
+Log
+InvRealCircle
+RealCircle
+```
+
+## Composing transformations
+
+```@docs
+ComposedTransformation
+```
