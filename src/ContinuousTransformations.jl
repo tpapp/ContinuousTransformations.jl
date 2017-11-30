@@ -111,7 +111,7 @@ Return the image of the transformation.
 function image end
 
 """
-Continuous bijection ``D ⊂ ℝⁿ→ I ⊂ ℝⁿ`` or ``D ⊂ ℝ → I ⊂ ℝ``.
+Continuous bijection ``D ⊂ ℝ^n→ I ⊂ ℝ^n`` or ``D ⊂ ℝ → I ⊂ ℝ``.
 """
 abstract type ContinuousTransformation <: Function end
 
@@ -777,7 +777,7 @@ inverse(t::TransformationTuple, y::Tuple) =
 Apply `t` to the rows of `x`, returning the results as a tuple of vectors or
 matrices.
 
-Useful for transforming (posterior) draws from a sample in ℝⁿ.
+Useful for transforming (posterior) draws from a sample in ``ℝ^n``.
 """
 function map_by_row(t::TransformationTuple, x::AbstractMatrix)
     ts = t.transformations
@@ -805,7 +805,7 @@ transformations, converted as required) to a tuple of values,
 3. returns the result above corrected by the log Jacobians.
 
 Useful when `ℓ` is a log-likelihood function with a restricted domain, and `t`
-is used to trasform to this domain from ``ℝⁿ``.
+is used to trasform to this domain from ``ℝ^n``.
 """
 struct TransformLogLikelihood{L, T <: TransformationTuple}
     loglikelihood::L
