@@ -837,6 +837,8 @@ inverse(t::TransformationTuple, y::Tuple) =
 # wrapper
 
 """
+$TYPEDEF
+
 Wrap a transformation to achieve some specialized functionality.
 
 Supports `length`, [`get_transformation`](@ref), and other methods depending on
@@ -902,12 +904,13 @@ end
 # transform distributions
 
 """
-$TYPEDEF
+    TransformDistribution(distribution, transformation)
 
-Given a transformation ``t`` and a distribution ``F``, create a transformed
-distribution object that has the distribution of ``t(x)``, ``x \sim F``.
+Given a `transformation` and a `distribution`, create a transformed distribution
+object that has the distribution of `transformation(x)` with `x ∼ distribution`.
 
-It supports `logpdf`, `rand`, `length`.
+It supports `logpdf`, `rand`, `length`. The transformation object is callable
+and works the same way as `t`.
 
 See also [`logpdf_in_domain`](@ref) for calculating the log pdf from the
 untransformed values.
@@ -932,19 +935,21 @@ Return the wrapped distribution.
 """
 get_distribution(t::TransformDistribution) = t.distribution
 
-rand(t::TransformDistribution) = t.transformation(rand(t.distribution))
+(t::TransformDistribution)(x) = t.transformation(x)
+
+rand(t::TransformDistribution) = t(rand(t.distribution))
 
 @forward TransformDistribution.distribution length
 
 """
     $SIGNATURES
 
-For a transformed distribution which maps ``x ∈ \mathcal{D}`` to some ``y``,
-return the log pdf for a given ``x``. The log pdf is adjusted with the log
-determinant of the Jacobian, ie the following holds:
+For a transformed distribution which maps `x` using a transformation, return the
+log pdf for a given `x`. The log pdf is adjusted with the log determinant of the
+Jacobian, ie the following holds:
 
 ```julia
-logpdf(t, t(x)) = logpdf_in_domain(t, x)
+logpdf(t, t(x)) == logpdf_in_domain(t, x)
 ```
 
 See `Distributions.logpdf`.

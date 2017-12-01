@@ -482,7 +482,7 @@ end
     @test maximum(abs.(mean_sim .- mean(Dz))) ≤ 1 # somewhat weak, but OK, large variance
     for _ in 1:1000
         x = rand(Dx)
-        y = t(x)
+        y = Dy(x)
         l = logpdf(Dz, y)       # true logpdf from distribution
         @test logpdf_in_domain(Dy, x) ≈ l
         @test logpdf(Dy, y) ≈ l
