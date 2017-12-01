@@ -306,9 +306,9 @@ intersect(a::PositiveRay, b::NegativeRay) = _maybe_segment(a.left, b.right)
 intersect(a::NegativeRay, b::NegativeRay) = NegativeRay(min(a.right, b.right))
 
 
-######################################################################
+
 # univariate transformations
-######################################################################
+
 
 """
 Univariate monotone transformation, either *increasing* or *decreasing* on the
@@ -360,12 +360,12 @@ RR_stability(::UnivariateTransformation) = NotRRStable()
 
 ∘(::RRStable, ::RRStable) = RRStable()
 
-######################################################################
+
 # Affine and Negation
 #
 # These play a special role since map subtypes of `AbstractInterval` to
 # themselves, and thus are useful for composition.
-######################################################################
+
 
 """
     Affine(α, β)
@@ -433,9 +433,10 @@ RR_stability(::Negation) = RRStable()
 
 rhs_string(::Negation, term) = "-" * term
 
-######################################################################
+
+
 # transformations from ℝ to subsets
-######################################################################
+
 
 """
     Logistic()
@@ -485,9 +486,10 @@ isincreasing(::Exp) = true
 
 rhs_string(::Exp, term) = "exp($term)"
 
-######################################################################
+
+
 # transformations to ℝ from subsets
-######################################################################
+
 
 """
     Logit()
@@ -537,9 +539,10 @@ isincreasing(::Log) = true
 
 rhs_string(::Log, term) = "log($term)"
 
-######################################################################
+
+
 # composed transformations
-######################################################################
+
 
 """
     ComposedTransformation(f, g)
@@ -610,9 +613,10 @@ isincreasing(c::ComposedTransformation) = isincreasing(c.f) == isincreasing(c.g)
 
 ∘(f::Affine, g::Affine) = Affine(f.α*g.α, _fma(f.α, g.β, f.β))
 
-######################################################################
+
+
 # calculated transformations
-######################################################################
+
 
 """
     affine_bridge(interval1, interval1)
@@ -657,9 +661,10 @@ bridge(dom, img::RealLine, t = default_transformation(dom, img)) =
 
 bridge(::RealLine, ::RealLine) = IDENTITY
 
-######################################################################
+
+
 # array transformations
-######################################################################
+
 
 """
     ArrayTransformation(transformation, dims)
@@ -705,9 +710,10 @@ image(t::ArrayTransformation) = fill(image(t.transformation), size(t))
 
 @forward ArrayTransformation.t isincreasing
 
-######################################################################
+
+
 # transformation tuple
-######################################################################
+
 
 """
     TransformationTuple(transformations::Tuple)
@@ -771,9 +777,10 @@ end
 inverse(t::TransformationTuple, y::Tuple) =
     vcat(map(inverse, t.transformations, y)...)
 
-######################################################################
+
+
 # loglikelihood wrapper
-######################################################################
+
 
 """
     TransformLogLikelihood(ℓ, transformations::Union{Tuple, TransformationTuple})
