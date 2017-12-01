@@ -386,6 +386,7 @@ end
     tt = TransformationTuple(ts)
     @test length(tt) == sum(length, ts)
     @test image(tt) == image.(ts)
+    @test domain(tt) == domain.(ts)
     @test repr(tt) == """
 TransformationTuple
     x[1] ↦ exp(x[1]) + 1.0
@@ -451,8 +452,13 @@ end
     tℓ = TransformLogLikelihood(ℓ, t1, t2)
 
     @test get_transformation(tℓ) == TransformationTuple(t1, t2)
-
     @test get_loglikelihood(tℓ) ≡ ℓ
+
+    # other constructor
+
+    tℓ2 = TransformLogLikelihood(ℓ, (t1, t2))
+    @test get_transformation(tℓ) == get_transformation(tℓ2)
+    @test get_loglikelihood(tℓ) ≡ get_loglikelihood(tℓ2)
 
     for _ in 1:100
         x = randn(length(tℓ))
@@ -480,6 +486,8 @@ end
     mean_sim = mean(rand(Dy) for _ in 1:100000)
     @test length(Dy) == length(Dx)
     @test maximum(abs.(mean_sim .- mean(Dz))) ≤ 1 # somewhat weak, but OK, large variance
+    @test get_transformation(Dy) ≡ t
+    @test get_distribution(Dy) ≡ Dx
     for _ in 1:1000
         x = rand(Dx)
         y = Dy(x)

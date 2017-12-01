@@ -797,7 +797,7 @@ end
 
 length(t::TransformationTuple) = sum(length(t) for t in t.transformations)
 
-domain(t::TransformationTuple) = image.(t.transformations)
+domain(t::TransformationTuple) = domain.(t.transformations)
 
 image(t::TransformationTuple) = image.(t.transformations)
 
