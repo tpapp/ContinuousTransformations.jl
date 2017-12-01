@@ -267,6 +267,20 @@ function test_affine_bridge(x, y)
     @test a(x) ≈ y
 end
 
+@testset "affine composition" begin
+    a = Affine(2, 3) ∘ Affine(1, 9)
+    test_univariate_random(a)
+    @test domain(a) == ℝ
+    @test image(a) == ℝ
+end
+
+@testset "non-RR stable composition" begin
+    c = EXP ∘ INVREALCIRCLE     # ℝ ↦ ℝ⁺ and (-1,1) ↦ ℝ, not RR stable
+    @test ContinuousTransformations.RR_stability(c) == ContinuousTransformations.NotRRStable()
+    @test_throws MethodError domain(c)
+    @test_throws MethodError image(c)
+end
+
 @testset "affine bridge" begin
     test_affine_bridge(ℝ, ℝ)
     for _ in 1:100
