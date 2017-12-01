@@ -710,11 +710,11 @@ image(t::ArrayTransformation) = fill(image(t.transformation), size(t))
 ######################################################################
 
 """
-    TransformationTuple(tuple_of_transformations)
+    TransformationTuple(transformations::Tuple)
     TransformationTuple(transformations...)
 
-A tuple of transformations. Given a vector of matching length, each takes as
-many reals as needed, and returns the result as a tuple.
+A tuple of [`ContinuousTransformation`](@ref)s. Given a vector of matching
+length, each takes as many reals as needed, and returns the result as a tuple.
 """
 @auto_hash_equals struct
     TransformationTuple{T <: Tuple{Vararg{ContinuousTransformation}}} <:
