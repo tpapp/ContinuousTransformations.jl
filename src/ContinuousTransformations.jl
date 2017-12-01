@@ -16,7 +16,7 @@ export
     Negation, NEGATION, Logistic, LOGISTIC, RealCircle, REALCIRCLE, Exp, EXP,
     Logit, LOGIT, InvRealCircle, INVREALCIRCLE, Log, LOG,
     affine_bridge, default_transformation, bridge,
-    ArrayTransformation, TransformationTuple, map_by_row,
+    ArrayTransformation, TransformationTuple,
     TransformLogLikelihood, get_transformation
 
 import Base:
@@ -770,22 +770,6 @@ end
 
 inverse(t::TransformationTuple, y::Tuple) =
     vcat(map(inverse, t.transformations, y)...)
-
-"""
-    map_by_row(t, x)
-
-Apply `t` to the rows of `x`, returning the results as a tuple of vectors or
-matrices.
-
-Useful for transforming (posterior) draws from a sample in ``ℝ^n``.
-"""
-function map_by_row(t::TransformationTuple, x::AbstractMatrix)
-    ts = t.transformations
-    ixs = transformation_indexes(ts)
-    _t(t, ix::Int) = t.(@view(x[:, ix]))
-    _t(t, ix::Range) = mapslices(t, @view(x[:, ix]), 2)
-    map(_t, ts, ixs)
-end
 
 ######################################################################
 # loglikelihood wrapper
