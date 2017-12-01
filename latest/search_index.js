@@ -53,7 +53,7 @@ var documenterSearchIndex = {"docs": [
     "page": "General API",
     "title": "ContinuousTransformations.ContinuousTransformation",
     "category": "Type",
-    "text": "Continuous bijection D  ^n I  ^n or D    I  .\n\n\n\n"
+    "text": "abstract ContinuousTransformation <: Function\n\nContinuous bijection D  ^n I  ^n or D    I  .\n\n\n\n"
 },
 
 {
@@ -117,7 +117,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Intervals and univariate transformations",
     "title": "ContinuousTransformations.AbstractInterval",
     "category": "Type",
-    "text": "Abstract supertype for all univariate intervals. It is not specified whether they are open or closed.\n\n\n\n"
+    "text": "abstract AbstractInterval\n\nAbstract supertype for all univariate intervals. It is not specified whether they are open or closed.\n\n\n\n"
 },
 
 {
@@ -205,7 +205,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Intervals and univariate transformations",
     "title": "ContinuousTransformations.UnivariateTransformation",
     "category": "Type",
-    "text": "Univariate monotone transformation, either increasing or decreasing on the whole domain (thus, a bijection).\n\n\n\n"
+    "text": "abstract UnivariateTransformation <: ContinuousTransformations.ContinuousTransformation\n\nUnivariate monotone transformation, either increasing or decreasing on the whole domain (thus, a bijection).\n\n\n\n"
 },
 
 {
@@ -385,11 +385,11 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "grouped/#ContinuousTransformations.get_transformation",
+    "location": "grouped/#ContinuousTransformations.GroupedTransformation",
     "page": "Grouped transformations",
-    "title": "ContinuousTransformations.get_transformation",
-    "category": "Function",
-    "text": "get_transformation(d)\n\n\nReturn the transformation from a wrapper object, eg TransformLogLikelihood.\n\n\n\n"
+    "title": "ContinuousTransformations.GroupedTransformation",
+    "category": "Type",
+    "text": "abstract GroupedTransformation <: ContinuousTransformations.ContinuousTransformation\n\nAbstract type for grouped transformations.\n\nA grouped transformation takes a vector, and transforms contiguous blocks of elements to some output type, determined by the specific transformation type.\n\nAll subtypes support\n\nlength: return the length of the vector that can be used as an argument\ncallable object for the transformation\nlogjac, and inverse,\ndomain and image, which may have specific interpretation for their result types depending on the concrete subtype.\n\n\n\n"
 },
 
 {
@@ -401,11 +401,19 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "grouped/#ContinuousTransformations.TransformLogLikelihood",
+    "location": "grouped/#ContinuousTransformations.ArrayTransformation",
     "page": "Grouped transformations",
-    "title": "ContinuousTransformations.TransformLogLikelihood",
+    "title": "ContinuousTransformations.ArrayTransformation",
     "category": "Type",
-    "text": "TransformLogLikelihood(ℓ, transformations::Union{Tuple, TransformationTuple})\nTransformLogLikelihood(ℓ, transformations...)\n\nReturn a callable that\n\ntransforms its vector argument using a transformation tuple (or a tuple of\n\ntransformations, converted as required) to a tuple of values,\n\ncalls ℓ with these, which should return a scalar,\nreturns the result above corrected by the log Jacobians.\n\nUseful when ℓ is a log-likelihood function with a restricted domain, and transformations is used to trasform to this domain from ^n.\n\nSee also get_transformation.\n\n\n\n"
+    "text": "ArrayTransformation(transformation, dims)\nArrayTransformation(transformation, dims...)\n\nApply transformation to a vector, returning an array of the given dimensions.\n\ndomain, image, and isincreasing return the corresponding values for the underlying transformation.\n\n\n\n"
+},
+
+{
+    "location": "grouped/#ContinuousTransformations.get_transformation",
+    "page": "Grouped transformations",
+    "title": "ContinuousTransformations.get_transformation",
+    "category": "Function",
+    "text": "get_transformation(d)\n\n\nReturn the transformation from a wrapper object.\n\n\n\n"
 },
 
 {
@@ -413,7 +421,71 @@ var documenterSearchIndex = {"docs": [
     "page": "Grouped transformations",
     "title": "Grouped transformations",
     "category": "section",
-    "text": "CurrentModule = ContinuousTransformationsget_transformation\nTransformationTuple\nTransformLogLikelihood"
+    "text": "CurrentModule = ContinuousTransformationsGroupedTransformation\nTransformationTuple\nArrayTransformation\nget_transformation"
+},
+
+{
+    "location": "wrapped/#",
+    "page": "Wrapped transformations",
+    "title": "Wrapped transformations",
+    "category": "page",
+    "text": ""
+},
+
+{
+    "location": "wrapped/#ContinuousTransformations.TransformationWrapper",
+    "page": "Wrapped transformations",
+    "title": "ContinuousTransformations.TransformationWrapper",
+    "category": "Type",
+    "text": "abstract TransformationWrapper\n\nWrap a transformation to achieve some specialized functionality.\n\nSupports length, get_transformation, and other methods depending on the subtype.\n\n\n\n"
+},
+
+{
+    "location": "wrapped/#ContinuousTransformations.TransformLogLikelihood",
+    "page": "Wrapped transformations",
+    "title": "ContinuousTransformations.TransformLogLikelihood",
+    "category": "Type",
+    "text": "TransformLogLikelihood(ℓ, transformation::Union{Tuple, GroupedTransformation})\n\nTransformLogLikelihood(ℓ, transformations...)\n\nReturn a callable that\n\ntransforms its vector argument using a grouped transformation to a set of values,\ncalls ℓ with these, which should return a scalar,\nreturns the result above corrected by the log Jacobians.\n\nUseful when ℓ is a log-likelihood function with a restricted domain, and transformations is used to trasform to this domain from ^n.\n\nSee also get_transformation, get_distribution, Distributions.logpdf, and logpdf_in_domain.\n\n\n\n"
+},
+
+{
+    "location": "wrapped/#ContinuousTransformations.get_loglikelihood",
+    "page": "Wrapped transformations",
+    "title": "ContinuousTransformations.get_loglikelihood",
+    "category": "Function",
+    "text": "get_loglikelihood(t)\n\n\nReturn the log likelihood function.\n\n\n\n"
+},
+
+{
+    "location": "wrapped/#ContinuousTransformations.TransformDistribution",
+    "page": "Wrapped transformations",
+    "title": "ContinuousTransformations.TransformDistribution",
+    "category": "Type",
+    "text": "TransformDistribution(distribution, transformation)\n\nGiven a transformation and a distribution, create a transformed distribution object that has the distribution of transformation(x) with x ∼ distribution.\n\nIt supports logpdf, rand, length. The transformation object is callable and works the same way as t.\n\nSee also logpdf_in_domain for calculating the log pdf from the untransformed values.\n\n\n\n"
+},
+
+{
+    "location": "wrapped/#ContinuousTransformations.get_distribution",
+    "page": "Wrapped transformations",
+    "title": "ContinuousTransformations.get_distribution",
+    "category": "Function",
+    "text": "get_distribution(t)\n\n\nReturn the wrapped distribution.\n\n\n\n"
+},
+
+{
+    "location": "wrapped/#ContinuousTransformations.logpdf_in_domain",
+    "page": "Wrapped transformations",
+    "title": "ContinuousTransformations.logpdf_in_domain",
+    "category": "Function",
+    "text": "logpdf_in_domain(t, x)\n\n\nFor a transformed distribution which maps x using a transformation, return the log pdf for a given x. The log pdf is adjusted with the log determinant of the Jacobian, ie the following holds:\n\nlogpdf(t, t(x)) == logpdf_in_domain(t, x)\n\nSee Distributions.logpdf.\n\n\n\n"
+},
+
+{
+    "location": "wrapped/#Wrapped-transformations-1",
+    "page": "Wrapped transformations",
+    "title": "Wrapped transformations",
+    "category": "section",
+    "text": "CurrentModule = ContinuousTransformationsTransformationWrapper\nTransformLogLikelihood\nget_loglikelihood\nTransformDistribution\nget_distribution\nlogpdf_in_domain"
 },
 
 {
@@ -453,7 +525,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Internals",
     "title": "ContinuousTransformations.RRStability",
     "category": "Type",
-    "text": "Trait that is useful for domain and image calculations. See RRStable.\n\n\n\n"
+    "text": "abstract RRStability\n\nTrait that is useful for domain and image calculations. See RRStable.\n\n\n\n"
 },
 
 {
@@ -461,7 +533,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Internals",
     "title": "ContinuousTransformations.RRStable",
     "category": "Type",
-    "text": "Trait that indicates that a univariate transformation\n\nmaps  to ,\nsupports mapping intervals, and\nmaps subtypes of AbstractInterval to the same type.\n\n\n\n"
+    "text": "struct RRStable <: ContinuousTransformations.RRStability\n\nTrait that indicates that a univariate transformation\n\nmaps  to ,\nsupports mapping intervals, and\nmaps subtypes of AbstractInterval to the same type.\n\n\n\n"
 },
 
 {
@@ -469,7 +541,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Internals",
     "title": "ContinuousTransformations.NotRRStable",
     "category": "Type",
-    "text": "Trait that indicates that a univariate transformation is not RRStable.\n\n\n\n"
+    "text": "struct NotRRStable <: ContinuousTransformations.RRStability\n\nTrait that indicates that a univariate transformation is not RRStable.\n\n\n\n"
 },
 
 {
