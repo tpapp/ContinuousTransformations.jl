@@ -833,8 +833,10 @@ end
 inverse(t::TransformationTuple, y::Tuple) =
     vcat(map(inverse, t.transformations, y)...)
 
+
 
 # wrapper
+
 
 """
 $TYPEDEF
@@ -845,6 +847,7 @@ Supports `length`, [`get_transformation`](@ref), and other methods depending on
 the subtype.
 """
 abstract type TransformationWrapper end
+
 
 
 # loglikelihood wrapper
