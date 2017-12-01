@@ -7,12 +7,14 @@ makedocs(modules = [ContinuousTransformations],
          authors = "Tamás K. Papp",
          checkdocs = :all,
          linkcheck = true,
+         assets = ["assets/custom.css"],
          html_prettyurls = haskey(ENV, "TRAVIS"), # clean URLs building on Travis
          pages = [
              "Overview" => "index.md",
              "General API" => "general.md",
              "Intervals and univariate transformations" => "univariate.md",
              "Grouped transformations" => "grouped.md",
+             "Wrapped transformations" => "wrapped.md",
              "Internals" => "internals.md"
          ])
 

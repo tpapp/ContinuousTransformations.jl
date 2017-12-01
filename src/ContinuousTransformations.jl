@@ -1,6 +1,9 @@
 module ContinuousTransformations
 
+import Base.rand
+
 using AutoHashEquals
+import Distributions: ContinuousMultivariateDistribution, logpdf
 using DocStringExtensions
 using MacroTools
 using Parameters
@@ -9,15 +12,21 @@ using Lazy
 using Unrolled
 
 export
+    # intervals
     AbstractInterval, RealLine, ℝ, PositiveRay, ℝ⁺, NegativeRay, ℝ⁻,
     Segment, width,
+    # univariate transformations
     UnivariateTransformation, domain, image, isincreasing, inverse, logjac,
     Affine, IDENTITY,
     Negation, NEGATION, Logistic, LOGISTIC, RealCircle, REALCIRCLE, Exp, EXP,
     Logit, LOGIT, InvRealCircle, INVREALCIRCLE, Log, LOG,
     affine_bridge, default_transformation, bridge,
-    ArrayTransformation, TransformationTuple,
-    TransformLogLikelihood, get_transformation
+    # grouped transformations
+    GroupedTransformation, get_transformation, ArrayTransformation,
+    TransformationTuple,
+    # wrapped transformations
+    TransformationWrapper, TransformLogLikelihood, get_loglikelihood,
+    TransformDistribution, get_distribution, logpdf_in_domain
 
 import Base:
     in, length, size, ∘, show, getindex, middle, linspace, intersect, extrema,
@@ -111,6 +120,8 @@ Return the image of the transformation.
 function image end
 
 """
+$TYPEDEF
+
 Continuous bijection ``D ⊂ ℝ^n→ I ⊂ ℝ^n`` or ``D ⊂ ℝ → I ⊂ ℝ``.
 """
 abstract type ContinuousTransformation <: Function end
@@ -146,6 +157,8 @@ function bridge end
 # intervals
 
 """
+$TYPEDEF
+
 Abstract supertype for all univariate intervals. It is not specified whether
 they are open or closed.
 """
@@ -311,6 +324,8 @@ intersect(a::NegativeRay, b::NegativeRay) = NegativeRay(min(a.right, b.right))
 
 
 """
+$TYPEDEF
+
 Univariate monotone transformation, either *increasing* or *decreasing* on the
 whole domain (thus, a bijection).
 """
@@ -329,11 +344,15 @@ Return `true` (`false`), when the transformation is monotonically increasing
 function isincreasing end
 
 """
+$TYPEDEF
+
 Trait that is useful for domain and image calculations. See [`RRStable`](@ref).
 """
 abstract type RRStability end
 
 """
+$TYPEDEF
+
 Trait that indicates that a univariate transformation
 
 1. maps ``ℝ`` to ``ℝ``,
@@ -345,6 +364,8 @@ Trait that indicates that a univariate transformation
 struct RRStable <: RRStability end
 
 """
+$TYPEDEF
+
 Trait that indicates that a univariate transformation is *not* [`RRStable`](@ref).
 """
 struct NotRRStable <: RRStability end
@@ -663,6 +684,38 @@ bridge(::RealLine, ::RealLine) = IDENTITY
 
 
 
+# grouped transformations
+
+"""
+$TYPEDEF
+
+Abstract type for grouped transformations.
+
+A grouped transformation takes a vector, and transforms contiguous blocks of
+elements to some output type, determined by the specific transformation type.
+
+All subtypes support
+
+- `length`: return the length of the vector that can be used as an argument
+
+- callable object for the transformation
+
+- `logjac`, and `inverse`,
+
+- `domain` and `image`, which may have specific interpretation for their result
+  types depending on the concrete subtype.
+"""
+abstract type GroupedTransformation <: ContinuousTransformation end
+
+"""
+    $SIGNATURES
+
+Return the transformation from a wrapper object.
+"""
+get_transformation(d) = d.transformation
+
+
+
 # array transformations
 
 
@@ -671,9 +724,12 @@ bridge(::RealLine, ::RealLine) = IDENTITY
     ArrayTransformation(transformation, dims...)
 
 Apply transformation to a vector, returning an array of the given dimensions.
+
+[`domain`](@ref), [`image`](@ref), and [`isincreasing`](@ref) return the
+corresponding values for the underlying transformation.
 """
 struct ArrayTransformation{T <: UnivariateTransformation,
-                           D} <: ContinuousTransformation
+                           D} <: GroupedTransformation
     transformation::T
     function ArrayTransformation(transformation::T,
                                  dims::Tuple{Vararg{Int64, N}}) where {T,N}
@@ -706,9 +762,7 @@ end
 inverse(t::ArrayTransformation, x) =
     reshape(inverse.(t.transformation, x), size(t))
 
-image(t::ArrayTransformation) = fill(image(t.transformation), size(t))
-
-@forward ArrayTransformation.t isincreasing
+@forward ArrayTransformation.transformation isincreasing, image, domain
 
 
 
@@ -720,11 +774,11 @@ image(t::ArrayTransformation) = fill(image(t.transformation), size(t))
     TransformationTuple(transformations...)
 
 A tuple of [`ContinuousTransformation`](@ref)s. Given a vector of matching
-length, each takes as many reals as needed, and returns the result as a tuple.
+`length`, each takes as many reals as needed, and returns the result as a tuple.
 """
 @auto_hash_equals struct
     TransformationTuple{T <: Tuple{Vararg{ContinuousTransformation}}} <:
-        ContinuousTransformation
+        GroupedTransformation
     transformations::T
 end
 
@@ -742,6 +796,8 @@ function transformation_string(t::TransformationTuple, x)
 end
 
 length(t::TransformationTuple) = sum(length(t) for t in t.transformations)
+
+domain(t::TransformationTuple) = image.(t.transformations)
 
 image(t::TransformationTuple) = image.(t.transformations)
 
@@ -777,19 +833,30 @@ end
 inverse(t::TransformationTuple, y::Tuple) =
     vcat(map(inverse, t.transformations, y)...)
 
+
+# wrapper
+
+"""
+Wrap a transformation to achieve some specialized functionality.
+
+Supports `length`, [`get_transformation`](@ref), and other methods depending on
+the subtype.
+"""
+abstract type TransformationWrapper end
 
 
 # loglikelihood wrapper
 
 
 """
-    TransformLogLikelihood(ℓ, transformations::Union{Tuple, TransformationTuple})
+    TransformLogLikelihood(ℓ, transformation::Union{Tuple, GroupedTransformation})
+
     TransformLogLikelihood(ℓ, transformations...)
 
 Return a callable that
 
-1. transforms its vector argument using a transformation tuple (or a tuple of
-transformations, converted as required) to a tuple of values,
+1. transforms its vector argument using a grouped transformation to a set of
+   values,
 
 2. calls `ℓ` with these, which should return a scalar,
 
@@ -798,9 +865,11 @@ transformations, converted as required) to a tuple of values,
 Useful when `ℓ` is a log-likelihood function with a restricted domain, and
 `transformations` is used to trasform to this domain from ``ℝ^n``.
 
-See also [`get_transformation`](@ref).
+See also [`get_transformation`](@ref), [`get_distribution`](@ref),
+`Distributions.logpdf`, and [`logpdf_in_domain`](@ref).
 """
-struct TransformLogLikelihood{L, T <: TransformationTuple}
+struct TransformLogLikelihood{L, T <: GroupedTransformation} <:
+        TransformationWrapper
     loglikelihood::L
     transformation::T
 end
@@ -811,22 +880,83 @@ TransformLogLikelihood(L, T::Tuple) =
 TransformLogLikelihood(L, ts::ContinuousTransformation...) =
     TransformLogLikelihood(L, TransformationTuple(ts))
 
+"""
+    $SIGNATURES
+
+Return the log likelihood function.
+"""
+get_loglikelihood(t::TransformLogLikelihood) = t.loglikelihood
+
 @forward TransformLogLikelihood.transformation length
 
 (f::TransformLogLikelihood)(x) =
     f.loglikelihood(f.transformation(x)...) + logjac(f.transformation, x)
 
-"""
-    $SIGNATURES
-
-Return the transformation from a wrapper object, eg
-[`TransformLogLikelihood`](@ref).
-"""
-get_transformation(d::TransformLogLikelihood) = d.transformation
-
 function show(io::IO, f::TransformLogLikelihood)
     print(io, "TransformLogLikelihood of length $(length(f)), with ")
     print(io, f.transformation)
+end
+
+
+
+# transform distributions
+
+"""
+$TYPEDEF
+
+Given a transformation ``t`` and a distribution ``F``, create a transformed
+distribution object that has the distribution of ``t(x)``, ``x \sim F``.
+
+It supports `logpdf`, `rand`, `length`.
+
+See also [`logpdf_in_domain`](@ref) for calculating the log pdf from the
+untransformed values.
+"""
+struct TransformDistribution{D <: ContinuousMultivariateDistribution,
+                             T <: GroupedTransformation} <: TransformationWrapper
+    distribution::D
+    transformation::T
+    function TransformDistribution(distribution::D, transformation::T) where {D,T}
+        length(distribution) == length(transformation) ||
+            throw(ArgumentError("Incompatible lengths."))
+        new{D,T}(distribution, transformation)
+    end
+end
+
+get_transformation(t::TransformDistribution) = t.transformation
+
+"""
+    $SIGNATURES
+
+Return the wrapped distribution.
+"""
+get_distribution(t::TransformDistribution) = t.distribution
+
+rand(t::TransformDistribution) = t.transformation(rand(t.distribution))
+
+@forward TransformDistribution.distribution length
+
+"""
+    $SIGNATURES
+
+For a transformed distribution which maps ``x ∈ \mathcal{D}`` to some ``y``,
+return the log pdf for a given ``x``. The log pdf is adjusted with the log
+determinant of the Jacobian, ie the following holds:
+
+```julia
+logpdf(t, t(x)) = logpdf_in_domain(t, x)
+```
+
+See `Distributions.logpdf`.
+"""
+function logpdf_in_domain(t::TransformDistribution, x)
+    # NOTE adjusting by -logjac because of the derivative of the inverse rule
+    logpdf(t.distribution, x) - logjac(t.transformation, x)
+end
+
+function logpdf(t::TransformDistribution, y)
+    x = inverse(t.transformation, y)
+    logpdf_in_domain(t, x)
 end
 
 end
