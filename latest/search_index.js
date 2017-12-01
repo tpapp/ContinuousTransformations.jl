@@ -377,6 +377,46 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "grouped/#",
+    "page": "Grouped transformations",
+    "title": "Grouped transformations",
+    "category": "page",
+    "text": ""
+},
+
+{
+    "location": "grouped/#ContinuousTransformations.get_transformation",
+    "page": "Grouped transformations",
+    "title": "ContinuousTransformations.get_transformation",
+    "category": "Function",
+    "text": "get_transformation(d)\n\n\nReturn the transformation from a wrapper object, eg TransformLogLikelihood.\n\n\n\n"
+},
+
+{
+    "location": "grouped/#ContinuousTransformations.TransformationTuple",
+    "page": "Grouped transformations",
+    "title": "ContinuousTransformations.TransformationTuple",
+    "category": "Type",
+    "text": "TransformationTuple(transformations::Tuple)\nTransformationTuple(transformations...)\n\nA tuple of ContinuousTransformations. Given a vector of matching length, each takes as many reals as needed, and returns the result as a tuple.\n\n\n\n"
+},
+
+{
+    "location": "grouped/#ContinuousTransformations.TransformLogLikelihood",
+    "page": "Grouped transformations",
+    "title": "ContinuousTransformations.TransformLogLikelihood",
+    "category": "Type",
+    "text": "TransformLogLikelihood(ℓ, transformations::Union{Tuple, TransformationTuple})\nTransformLogLikelihood(ℓ, transformations...)\n\nReturn a callable that\n\ntransforms its vector argument using a transformation tuple (or a tuple of\n\ntransformations, converted as required) to a tuple of values,\n\ncalls ℓ with these, which should return a scalar,\nreturns the result above corrected by the log Jacobians.\n\nUseful when ℓ is a log-likelihood function with a restricted domain, and transformations is used to trasform to this domain from ^n.\n\nSee also get_transformation.\n\n\n\n"
+},
+
+{
+    "location": "grouped/#Grouped-transformations-1",
+    "page": "Grouped transformations",
+    "title": "Grouped transformations",
+    "category": "section",
+    "text": "CurrentModule = ContinuousTransformationsget_transformation\nTransformationTuple\nTransformLogLikelihood"
+},
+
+{
     "location": "internals/#",
     "page": "Internals",
     "title": "Internals",
