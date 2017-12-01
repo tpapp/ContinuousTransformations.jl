@@ -12,6 +12,7 @@ makedocs(modules = [ContinuousTransformations],
              "Overview" => "index.md",
              "General API" => "general.md",
              "Intervals and univariate transformations" => "univariate.md",
+             "Grouped transformations" => "grouped.md",
              "Internals" => "internals.md"
          ])
 
