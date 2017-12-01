@@ -668,7 +668,6 @@ Return a transformation from `dom` that can be mapped to `img` using
 default_transformation(::RealLine, ::Segment) = REALCIRCLE
 default_transformation(::RealLine, ::PositiveRay) = EXP
 default_transformation(::RealLine, ::NegativeRay) = EXP
-default_transformation(::RealLine, ::RealLine) = IDENTITY
 
 default_transformation(::Segment, ::RealLine) = INVREALCIRCLE
 default_transformation(::PositiveRay, ::RealLine) = LOG
