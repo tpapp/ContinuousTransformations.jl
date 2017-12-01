@@ -776,7 +776,7 @@ inverse(t::TransformationTuple, y::Tuple) =
 ######################################################################
 
 """
-    TransformLogLikelihood(ℓ, t::Union{Tuple, TransformationTuple})
+    TransformLogLikelihood(ℓ, transformations::Union{Tuple, TransformationTuple})
     TransformLogLikelihood(ℓ, transformations...)
 
 Return a callable that
@@ -788,8 +788,10 @@ transformations, converted as required) to a tuple of values,
 
 3. returns the result above corrected by the log Jacobians.
 
-Useful when `ℓ` is a log-likelihood function with a restricted domain, and `t`
-is used to trasform to this domain from ``ℝ^n``.
+Useful when `ℓ` is a log-likelihood function with a restricted domain, and
+`transformations` is used to trasform to this domain from ``ℝ^n``.
+
+See also [`get_transformation`](@ref).
 """
 struct TransformLogLikelihood{L, T <: TransformationTuple}
     loglikelihood::L
@@ -807,6 +809,12 @@ TransformLogLikelihood(L, ts::ContinuousTransformation...) =
 (f::TransformLogLikelihood)(x) =
     f.loglikelihood(f.transformation(x)...) + logjac(f.transformation, x)
 
+"""
+    $SIGNATURES
+
+Return the transformation from a wrapper object, eg
+[`TransformLogLikelihood`](@ref).
+"""
 get_transformation(d::TransformLogLikelihood) = d.transformation
 
 function show(io::IO, f::TransformLogLikelihood)

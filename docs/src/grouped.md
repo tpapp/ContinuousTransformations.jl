@@ -5,5 +5,7 @@ CurrentModule = ContinuousTransformations
 ```
 
 ```@docs
+get_transformation
 TransformationTuple
+TransformLogLikelihood
 ```
