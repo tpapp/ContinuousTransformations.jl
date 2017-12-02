@@ -26,7 +26,7 @@ export
     TransformationTuple,
     # wrapped transformations
     TransformationWrapper, TransformLogLikelihood, get_loglikelihood,
-    TransformDistribution, get_distribution, logpdf_in_domain
+    TransformDistribution, get_distribution, logpdf_in_domain, logpdf_in_image
 
 import Base:
     in, length, size, ∘, show, getindex, middle, linspace, intersect, extrema,
@@ -911,11 +911,10 @@ end
 Given a `transformation` and a `distribution`, create a transformed distribution
 object that has the distribution of `transformation(x)` with `x ∼ distribution`.
 
-It supports `logpdf`, `rand`, `length`. The transformation object is callable
-and works the same way as `t`.
+The transformation object is callable with the same syntax as
+`transformation`. It also supports methods `rand`, `length`.
 
-See also [`logpdf_in_domain`](@ref) for calculating the log pdf from the
-untransformed values.
+See also [`logpdf_in_domain`](@ref) and [`logpdf_in_image`](@ref).
 """
 struct TransformDistribution{D <: ContinuousMultivariateDistribution,
                              T <: GroupedTransformation} <: TransformationWrapper
@@ -946,22 +945,35 @@ rand(t::TransformDistribution) = t(rand(t.distribution))
 """
     $SIGNATURES
 
-For a transformed distribution which maps `x` using a transformation, return the
-log pdf for a given `x`. The log pdf is adjusted with the log determinant of the
-Jacobian, ie the following holds:
+The log pdf for a transformed distribution at `t(x)` in image, calculated in the
+domain without performing the transformation.
 
-```julia
-logpdf(t, t(x)) == logpdf_in_domain(t, x)
-```
+The log pdf is adjusted with the log determinant of the Jacobian, ie the
+following holds:
 
-See `Distributions.logpdf`.
+```julia logpdf_in_image(t, t(x)) == logpdf_in_domain(t, x) ```
+
+See [`logpdf_in_image`](@ref).
+
+!!! note
+
+    Typical usage of this function would be drawing some random `x`s from the
+    contained distribution (possibly also used for some other purpose), and
+    obtaining the log pdfs at `t(y)` with the same values.
 """
 function logpdf_in_domain(t::TransformDistribution, x)
     # NOTE adjusting by -logjac because of the derivative of the inverse rule
     logpdf(t.distribution, x) - logjac(t.transformation, x)
 end
 
-function logpdf(t::TransformDistribution, y)
+"""
+    $SIGNATURES
+
+The log pdf for a transformed distribution at `y` in image.
+
+See also [`logpdf_in_domain`](@ref).
+"""
+function logpdf_in_image(t::TransformDistribution, y)
     x = inverse(t.transformation, y)
     logpdf_in_domain(t, x)
 end

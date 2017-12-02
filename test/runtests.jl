@@ -489,6 +489,7 @@ end
 
 # transforming distributions
 
+
 @testset "transform distribution with array transformation" begin
     μ = [-0.117965, -0.263465, -0.932187]
     A = [-0.15368 1.12831 0.364249; 1.63777 1.5392 0.101908; -1.22376 -1.11266 0.246365]
@@ -507,6 +508,6 @@ end
         y = Dy(x)
         l = logpdf(Dz, y)       # true logpdf from distribution
         @test logpdf_in_domain(Dy, x) ≈ l
-        @test logpdf(Dy, y) ≈ l
+        @test logpdf_in_image(Dy, y) ≈ l
     end
 end
