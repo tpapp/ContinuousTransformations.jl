@@ -136,6 +136,8 @@ function rhs_string end
 
 transformation_string(t, x = "x") = x * " ↦ " * rhs_string(t, x)
 
+# this is necessary because `display` calls this method, which is defined for
+# Function and would match
 show(io::IO, ::MIME"text/plain", t::ContinuousTransformation) =
     println(io, transformation_string(t, "x"))
 

@@ -331,6 +331,14 @@ end
     @test repr(bridge(ℝ, Segment(0,1))) == "x ↦ 0.5⋅realcircle(x) + 0.5"
 end
 
+@testset "show MIME method" begin
+    io = IOBuffer()
+    t = EXP
+    show(io, MIME"text/plain"(), t)
+    s = String(take!(io))
+    @test s == repr(t) * "\n"
+end
+
 
 
 # array transformations
