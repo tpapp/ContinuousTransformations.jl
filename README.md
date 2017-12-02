@@ -29,7 +29,7 @@ The convenience function `bridge(dom, img)` figures out the right transformation
 Examples:
 ```julia
 using ContinuousTransformations
-t = transformation_to(Segment(0.0, 3.0)) # will use a real-circle transformation, stretched
+t = bridge(ℝ, Segment(0.0, 3.0)) # will use a real-circle transformation, stretched
 t(0.0)             # 1.5
 inverse(t, 1.5)    # ≈ 0.0
 logjac(t, 0)       # ≈ 0.405
@@ -40,7 +40,7 @@ image(t)           # Segment(0.0, 3.0)
 
 `TransformationTuple(transformations)` can be used for heterogeneous collections of transformations.
 
-`TransformLogLikelihood` wraps a log likelihood function, transforming the domain and taking care of the Jacobian transformations.
+`TransformLogLikelihood` wraps a log likelihood function, and `TransformDistribution` transforms a distribution. Both of them take care of the log Jacobian determinant adjustment.
 
 ## Planned
 
