@@ -461,7 +461,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Wrapped transformations",
     "title": "ContinuousTransformations.TransformDistribution",
     "category": "Type",
-    "text": "TransformDistribution(distribution, transformation)\n\nGiven a transformation and a distribution, create a transformed distribution object that has the distribution of transformation(x) with x ∼ distribution.\n\nIt supports logpdf, rand, length. The transformation object is callable and works the same way as t.\n\nSee also logpdf_in_domain for calculating the log pdf from the untransformed values.\n\n\n\n"
+    "text": "TransformDistribution(distribution, transformation)\n\nGiven a transformation and a distribution, create a transformed distribution object that has the distribution of transformation(x) with x ∼ distribution.\n\nThe transformation object is callable with the same syntax as transformation. It also supports methods rand, length.\n\nSee also logpdf_in_domain and logpdf_in_image.\n\n\n\n"
 },
 
 {
@@ -477,7 +477,15 @@ var documenterSearchIndex = {"docs": [
     "page": "Wrapped transformations",
     "title": "ContinuousTransformations.logpdf_in_domain",
     "category": "Function",
-    "text": "logpdf_in_domain(t, x)\n\n\nFor a transformed distribution which maps x using a transformation, return the log pdf for a given x. The log pdf is adjusted with the log determinant of the Jacobian, ie the following holds:\n\nlogpdf(t, t(x)) == logpdf_in_domain(t, x)\n\nSee Distributions.logpdf.\n\n\n\n"
+    "text": "logpdf_in_domain(t, x)\n\n\nThe log pdf for a transformed distribution at t(x) in image, calculated in the domain without performing the transformation.\n\nThe log pdf is adjusted with the log determinant of the Jacobian, ie the following holds:\n\njulia logpdf_in_image(t, t(x)) == logpdf_in_domain(t, x)\n\nSee logpdf_in_image.\n\nnote: Note\nTypical usage of this function would be drawing some random xs from the contained distribution (possibly also used for some other purpose), and obtaining the log pdfs at t(y) with the same values.\n\n\n\n"
+},
+
+{
+    "location": "wrapped/#ContinuousTransformations.logpdf_in_image",
+    "page": "Wrapped transformations",
+    "title": "ContinuousTransformations.logpdf_in_image",
+    "category": "Function",
+    "text": "logpdf_in_image(t, y)\n\n\nThe log pdf for a transformed distribution at y in image.\n\nSee also logpdf_in_domain.\n\n\n\n"
 },
 
 {
@@ -485,7 +493,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Wrapped transformations",
     "title": "Wrapped transformations",
     "category": "section",
-    "text": "CurrentModule = ContinuousTransformationsTransformationWrapper\nTransformLogLikelihood\nget_loglikelihood\nTransformDistribution\nget_distribution\nlogpdf_in_domain"
+    "text": "CurrentModule = ContinuousTransformationsTransformationWrapper\nTransformLogLikelihood\nget_loglikelihood\nTransformDistribution\nget_distribution\nlogpdf_in_domain\nlogpdf_in_image"
 },
 
 {
