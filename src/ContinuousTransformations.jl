@@ -1,3 +1,4 @@
+__precompile__()
 module ContinuousTransformations
 
 import Base.rand
