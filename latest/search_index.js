@@ -445,7 +445,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Wrapped transformations",
     "title": "ContinuousTransformations.TransformLogLikelihood",
     "category": "Type",
-    "text": "TransformLogLikelihood(ℓ, transformation::Union{Tuple, GroupedTransformation})\n\nTransformLogLikelihood(ℓ, transformations...)\n\nReturn a callable that\n\ntransforms its vector argument using a grouped transformation to a set of values,\ncalls ℓ with these, which should return a scalar,\nreturns the result above corrected by the log Jacobians.\n\nUseful when ℓ is a log-likelihood function with a restricted domain, and transformations is used to trasform to this domain from ^n.\n\nSee also get_transformation, get_distribution, Distributions.logpdf, and logpdf_in_domain.\n\n\n\n"
+    "text": "TransformLogLikelihood(ℓ, transformation::Union{Tuple, GroupedTransformation})\n\nTransformLogLikelihood(ℓ, transformations...)\n\nReturn a callable that\n\ntransforms its vector argument using a grouped transformation to a set of values,\ncalls ℓ (which should return a scalar) with this tuple.\nreturns the result above corrected by the log Jacobians.\n\nUseful when ℓ is a log-likelihood function with a restricted domain, and transformations is used to trasform to this domain from ^n.\n\nSee also get_transformation, get_distribution, Distributions.logpdf, and logpdf_in_domain.\n\n\n\n"
 },
 
 {
@@ -629,7 +629,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Internals",
     "title": "ContinuousTransformations.@define_singleton",
     "category": "Macro",
-    "text": "Define a singleton type with the given name and supertype (specified as name <: supertype), and a constant which defaults to the name in uppercase.\n\n\n\n"
+    "text": "@define_singleton(name_and_supertype)\n@define_singleton(name_and_supertype, constant)\n\n\nDefine a singleton type with the given name and supertype (specified as name <: supertype), and a constant which defaults to the name in uppercase.\n\n\n\n"
 },
 
 {
