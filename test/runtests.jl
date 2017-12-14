@@ -6,10 +6,8 @@ import ForwardDiff: derivative
 using InferenceUtilities
 using Parameters
 
-
 
 # test: utilities
-
 
 "Test singleton type."
 ContinuousTransformations.@define_singleton TestSingleton <: Real
@@ -37,10 +35,8 @@ rand_in(ray::NegativeRay) = ray.right - randn()^2
 
 rand_in(::RealLine) = randn()
 
-
 
 # test: intervals
-
 
 @testset "interval constructors" begin
     @test_throws ArgumentError Segment(NaN, NaN)
@@ -152,10 +148,8 @@ end
     @test repr(ℝ) == "ℝ"
 end
 
-
 
 # test: univariate transformation
-
 
 @testset "univariate transformation basics" begin
     @test_throws DomainError Affine(0, 1)
@@ -339,10 +333,8 @@ end
     @test s == repr(t) * "\n"
 end
 
-
 
 # array transformations
-
 
 """
     rand_Inf!(x, [p])
@@ -396,10 +388,8 @@ end
     @test repr(ArrayTransformation(EXP, 2)) == repr(EXP) * " for 2 elements"
 end
 
-
 
 # transformation tuple
-
 
 @testset "transformation tuple univariate" begin
     ts = bridge.(ℝ,
@@ -459,10 +449,8 @@ end
     @test @isinferred inverse(t, (1.0, ones(2)))
 end
 
-
 
 # log likelihood transform
-
 
 @testset "log likelihood transformation" begin
     ℓ1(x) = 0.3*log(x) + 0.6*log(1-x) # unnormalized Beta, on (0, 1)
@@ -493,10 +481,8 @@ TransformLogLikelihood of length 2, with TransformationTuple
     x[2] ↦ exp(x[2])"""
 end
 
-
 
 # transforming distributions
-
 
 @testset "transform distribution with array transformation" begin
     μ = [-0.117965, -0.263465, -0.932187]
