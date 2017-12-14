@@ -865,7 +865,7 @@ Return a callable that
 1. transforms its vector argument using a grouped transformation to a set of
    values,
 
-2. calls `ℓ` with these, which should return a scalar,
+2. calls `ℓ` (which should return a scalar) with this tuple.
 
 3. returns the result above corrected by the log Jacobians.
 
@@ -897,7 +897,7 @@ get_loglikelihood(t::TransformLogLikelihood) = t.loglikelihood
 @forward TransformLogLikelihood.transformation length
 
 (f::TransformLogLikelihood)(x) =
-    f.loglikelihood(f.transformation(x)...) + logjac(f.transformation, x)
+    f.loglikelihood(f.transformation(x)) + logjac(f.transformation, x)
 
 function show(io::IO, f::TransformLogLikelihood)
     print(io, "TransformLogLikelihood of length $(length(f)), with ")

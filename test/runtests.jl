@@ -455,7 +455,7 @@ end
 @testset "log likelihood transformation" begin
     ℓ1(x) = 0.3*log(x) + 0.6*log(1-x) # unnormalized Beta, on (0, 1)
     ℓ2(x) = 2*log(x) - 0.3*x          # unnormalized Γ, on (0, ∞)
-    ℓ(x1, x2) = ℓ1(x1) + ℓ2(x2)
+    ℓ(x) = ℓ1(x[1]) + ℓ2(x[2])
 
     t1 = bridge(ℝ, Segment(0,1))
     t2 = bridge(ℝ, PositiveRay(0))
@@ -472,7 +472,7 @@ end
 
     for _ in 1:100
         x = randn(length(tℓ))
-        @test tℓ(x) ≈ ℓ(t1(x[1]), t2(x[2])) + logjac(t1, x[1]) + logjac(t2, x[2])
+        @test tℓ(x) ≈ ℓ((t1(x[1]), t2(x[2]))) + logjac(t1, x[1]) + logjac(t2, x[2])
     end
 
     @test repr(tℓ) == """
@@ -486,7 +486,9 @@ end
 
 @testset "transform distribution with array transformation" begin
     μ = [-0.117965, -0.263465, -0.932187]
-    A = [-0.15368 1.12831 0.364249; 1.63777 1.5392 0.101908; -1.22376 -1.11266 0.246365]
+    A = [-0.15368 1.12831 0.364249;
+         1.63777 1.5392 0.101908;
+         -1.22376 -1.11266 0.246365]
     Σ = A'*A                   # positive semidefinite, positive definite w.p. 1
     Dx = MvNormal(μ, Σ)
     t = ArrayTransformation(EXP, 3)
@@ -494,7 +496,8 @@ end
     Dz = MvLogNormal(μ, Σ)
     mean_sim = mean(rand(Dy) for _ in 1:100000)
     @test length(Dy) == length(Dx)
-    @test maximum(abs.(mean_sim .- mean(Dz))) ≤ 1 # somewhat weak, but OK, large variance
+    # test below is somewhat weak, but acceptable; large variance
+    @test maximum(abs.(mean_sim .- mean(Dz))) ≤ 1
     @test get_transformation(Dy) ≡ t
     @test get_distribution(Dy) ≡ Dx
     for _ in 1:1000
