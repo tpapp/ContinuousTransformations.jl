@@ -55,6 +55,7 @@ macro define_isapprox(T, fields...)
 end
 
 """
+    $SIGNATURES
 
 Define a singleton type with the given name and supertype (specified
 as `name <: supertype`), and a constant which defaults to the name in
@@ -79,10 +80,8 @@ https://github.com/JuliaDiff/ReverseDiff.jl/issues/86 is fixed.
 """
 _fma(x, y, z) = x*y+z
 
-
 
 # abstract interface for transformations
-
 
 """
     logjac(t, x)
@@ -281,7 +280,6 @@ middle(s::Segment) = middle(s.left, s.right)
 
 linspace(s::Segment, n = 50) = linspace(s.left, s.right, n)
 
-
 
 # intersections
 
@@ -318,10 +316,8 @@ intersect(a::PositiveRay, b::NegativeRay) = _maybe_segment(a.left, b.right)
 
 intersect(a::NegativeRay, b::NegativeRay) = NegativeRay(min(a.right, b.right))
 
-
 
 # univariate transformations
-
 
 """
 $TYPEDEF
@@ -386,7 +382,6 @@ RR_stability(::UnivariateTransformation) = NotRRStable()
 #
 # These play a special role since map subtypes of `AbstractInterval` to
 # themselves, and thus are useful for composition.
-
 
 """
     Affine(α, β)
@@ -454,10 +449,8 @@ RR_stability(::Negation) = RRStable()
 
 rhs_string(::Negation, term) = "-" * term
 
-
 
 # transformations from ℝ to subsets
-
 
 """
     Logistic()
@@ -507,10 +500,8 @@ isincreasing(::Exp) = true
 
 rhs_string(::Exp, term) = "exp($term)"
 
-
 
 # transformations to ℝ from subsets
-
 
 """
     Logit()
@@ -560,10 +551,8 @@ isincreasing(::Log) = true
 
 rhs_string(::Log, term) = "log($term)"
 
-
 
 # composed transformations
-
 
 """
     ComposedTransformation(f, g)
@@ -634,10 +623,8 @@ isincreasing(c::ComposedTransformation) = isincreasing(c.f) == isincreasing(c.g)
 
 ∘(f::Affine, g::Affine) = Affine(f.α*g.α, _fma(f.α, g.β, f.β))
 
-
 
 # calculated transformations
-
 
 """
     affine_bridge(interval1, interval1)
@@ -681,7 +668,6 @@ bridge(dom, img::RealLine, t = default_transformation(dom, img)) =
 
 bridge(::RealLine, ::RealLine) = IDENTITY
 
-
 
 # grouped transformations
 
@@ -713,10 +699,8 @@ Return the transformation from a wrapper object.
 """
 get_transformation(d) = d.transformation
 
-
 
 # array transformations
-
 
 """
     ArrayTransformation(transformation, dims)
@@ -763,10 +747,8 @@ inverse(t::ArrayTransformation, x) =
 
 @forward ArrayTransformation.transformation isincreasing, image, domain
 
-
 
 # transformation tuple
-
 
 """
     TransformationTuple(transformations::Tuple)
@@ -832,10 +814,8 @@ end
 inverse(t::TransformationTuple, y::Tuple) =
     vcat(map(inverse, t.transformations, y)...)
 
-
 
 # wrapper
-
 
 """
 $TYPEDEF
@@ -847,10 +827,8 @@ the subtype.
 """
 abstract type TransformationWrapper end
 
-
 
 # loglikelihood wrapper
-
 
 """
     TransformLogLikelihood(ℓ, transformation::Union{Tuple, GroupedTransformation})
@@ -900,7 +878,6 @@ function show(io::IO, f::TransformLogLikelihood)
     print(io, "TransformLogLikelihood of length $(length(f)), with ")
     print(io, f.transformation)
 end
-
 
 
 # transform distributions
