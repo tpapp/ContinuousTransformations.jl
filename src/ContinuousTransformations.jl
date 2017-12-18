@@ -955,4 +955,54 @@ function logpdf_in_image(t::TransformDistribution, y)
     logpdf_in_domain(t, x)
 end
 
+
+# misc utilities
+
+"""
+    $SIGNATURES
+
+See [`_map_to_arrays`](@ref).
+"""
+function map_to_arrays!(f, Bs, A)
+    for i in 1:length(A)
+        z = f(A[i])
+        for (j, b) in enumerate(z)
+            Bs[j][i] = z[j]
+        end
+    end
+    Bs
+end
+
+"""
+    $SIGNATURES
+
+Internal function for implementing [`map_to_arrays`](@ref).
+
+!!! NOTE
+
+    Very inefficient implementation, just to test if the interface is
+    useful. Rewrite later on. Same applies to `map_to_arrays!`.
+"""
+function _map_to_arrays(f, b₀::T, A) where {T <: Tuple}
+    Bs = map(S -> similar(A, S), tuple(T.parameters...))
+    map_to_arrays!(f, Bs, A)
+end
+
+"""
+    $SIGNATURES
+
+Map `A` elementwise using `f`, collecting the result in a structure that is
+similar to what is returned by `f`. Eg
+
+```julia
+julia> f = x -> (x+1, Float64.(x) + 2);
+
+julia> A = 1:5;
+
+julia> B = map_to_arrays(f, A)
+([2, 3, 4, 5, 6], [3.0, 4.0, 5.0, 6.0, 7.0])
+```
+"""
+map_to_arrays(f, A::AbstractArray) = _map_to_arrays(f, f(first(A)), A)
+
 end

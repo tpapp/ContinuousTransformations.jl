@@ -1,4 +1,5 @@
 using ContinuousTransformations
+using ContinuousTransformations: map_to_arrays
 using Base.Test
 
 using Distributions
@@ -507,4 +508,16 @@ end
         @test logpdf_in_domain(Dy, x) ≈ l
         @test logpdf_in_image(Dy, y) ≈ l
     end
+end
+
+
+# misc utilities
+
+@testset "map_to_arrays" begin
+    f = x -> (x+1, Float64.(x) + 2)
+    A = 1:10
+    B = map_to_arrays(f, A)
+    @test B isa Tuple{Vector{Int}, Vector{Float64}}
+    @test B[1] == collect(2:11)
+    @test B[2] == Float64.(collect(3:12))
 end
