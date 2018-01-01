@@ -1,5 +1,4 @@
 using ContinuousTransformations
-using ContinuousTransformations: map_to_arrays
 using Base.Test
 
 using Distributions
@@ -513,11 +512,20 @@ end
 
 # misc utilities
 
-@testset "map_to_arrays" begin
-    f = x -> (x+1, Float64.(x) + 2)
-    A = 1:10
-    B = map_to_arrays(f, A)
-    @test B isa Tuple{Vector{Int}, Vector{Float64}}
-    @test B[1] == collect(2:11)
-    @test B[2] == Float64.(collect(3:12))
+@testset "ungrouping" begin
+    a = bridge(ℝ, Segment(0, 5))
+    b = ArrayTransformation(bridge(ℝ, PositiveRay(7.0)), 2)
+    t = TransformationTuple((a, b))
+    N = 100
+    A = [randn(3) for _ in 1:N]
+    B = ungroup(Vector, t, A)
+    C = ungroup(Array, t, A)
+    for i in 1:N
+        z = t(A[i])
+        @test B[1][i] == z[1]
+        @test B[2][1][i] == z[2][1]
+        @test B[2][2][i] == z[2][2]
+        @test C[1][i] == z[1]
+        @test C[2][i, :] == z[2]
+    end
 end

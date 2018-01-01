@@ -3,8 +3,10 @@ module ContinuousTransformations
 
 import Base.rand
 
+using ArgCheck
 using AutoHashEquals
-import Distributions: ContinuousMultivariateDistribution, logpdf
+import Distributions:
+    ContinuousUnivariateDistribution, ContinuousMultivariateDistribution, logpdf
 using DocStringExtensions
 using MacroTools
 using Parameters
@@ -27,7 +29,9 @@ export
     TransformationTuple,
     # wrapped transformations
     TransformationWrapper, TransformLogLikelihood, get_loglikelihood,
-    TransformDistribution, get_distribution, logpdf_in_domain, logpdf_in_image
+    TransformDistribution, get_distribution, logpdf_in_domain, logpdf_in_image,
+    # utilities
+    ungroup
 
 import Base:
     in, length, size, ∘, show, getindex, middle, linspace, intersect, extrema,
@@ -958,62 +962,71 @@ end
 
 # misc utilities
 # NOTE: may be experimental, removed/redesigned
+# NOTE: code written for simplicity, not speed, benchmark & optimize later
 
 """
     $SIGNATURES
 
-See [`_map_to_arrays`](@ref).
+Make a container for ungrouped results.
+
+The first argument, `Vector` or `Array`, determines the result of ungrouping.
+
+`elt` is a representative element, used to determine element type, and `len` is
+the length of the result.
 """
-function map_to_arrays!(f, Bs, A)
-    for i in 1:length(A)
-        z = f(A[i])
-        for (j, b) in enumerate(z)
-            Bs[j][i] = z[j]
-        end
+function make_ungrouped_container(::Type{Vector},
+                                  elt::AbstractArray{T}, len) where T
+    [Vector{T}(len) for _ in CartesianRange(indices(elt))]
+end
+
+make_ungrouped_container(::Type{Array}, elt::AbstractArray{T}, len) where T =
+    Array{T}(len, size(elt)...)
+
+make_ungrouped_container(T, elt::Tuple, len) =
+    map(x -> make_ungrouped_container(T, x, len), elt)
+
+make_ungrouped_container(_, elt::T, len) where {T <: Real} = Vector{T}(len)
+
+"""
+    $SIGNATURES
+
+Save `elt` in `container` at index `i`. `T` determines the layout of
+`container`, conformably with [`make_ungrouped_container`](@ref).
+"""
+ungroup_elt!(T, container::NTuple{N, Any}, elt::NTuple{N, Any}, i) where N =
+    foreach((c, e) -> ungroup_elt!(T, c, e, i), container, elt)
+
+function ungroup_elt!(::Type{Vector}, container::AbstractArray,
+                      elt::AbstractArray, i)
+    @argcheck indices(container) == indices(elt)
+    for j in 1:length(elt)
+        ungroup_elt!(Vector, container[j], elt[j], i)
     end
-    Bs
 end
 
-"""
-    $SIGNATURES
+ungroup_elt!(::Type{Array}, container::AbstractArray,
+             elt::AbstractArray{T, N}, i) where {T, N} =
+    container[i, fill(Colon(), N)...] .= elt
 
-Internal function for implementing [`map_to_arrays`](@ref).
-
-!!! NOTE
-
-    Very inefficient implementation, just to test if the interface is
-    useful. Rewrite later on. Same applies to `map_to_arrays!`.
-"""
-function _map_to_arrays(f, b₀::T, A) where {T <: Tuple}
-    Bs = map(S -> similar(A, S), tuple(T.parameters...))
-    map_to_arrays!(f, Bs, A)
-end
+ungroup_elt!(_, container::AbstractVector, elt::Number, i) = container[i] = elt
 
 """
     $SIGNATURES
 
-Map `A` elementwise using `f`, collecting the result in a structure that is
-similar to what is returned by `f`. Eg
+Transform the vector `A` elementwise using `transformation`, and collect the
+results in arrays or vectors organized as a single result from `transformation`.
 
-```julia
-julia> f = x -> (x+1, Float64.(x) + 2);
-
-julia> A = 1:5;
-
-julia> B = map_to_arrays(f, A)
-([2, 3, 4, 5, 6], [3.0, 4.0, 5.0, 6.0, 7.0])
-```
+The shape of the result is determined by the first argument, which can be `Vector` or `Array`. The difference is that `Array` stacks arrays
 """
-map_to_arrays(f, A::AbstractArray) = _map_to_arrays(f, f(first(A)), A)
-
-"""
-    $SIGNATURES
-
-FIXME
-"""
-function map_to_array_columns(f, A)
-    B = map_to_arrays(f, A)
-    map(b -> hcat(b...), B)
+function ungroup(T, transformation::GroupedTransformation, A::AbstractVector)
+    n = length(A)
+    first_transformed = transformation(A[1])
+    container = make_ungrouped_container(T, first_transformed, n)
+    ungroup_elt!(T, container, first_transformed, 1)
+    for i in 2:n
+        ungroup_elt!(T, container, transformation(A[i]), i)
+    end
+    container
 end
 
 end
