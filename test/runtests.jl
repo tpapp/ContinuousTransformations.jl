@@ -528,7 +528,7 @@ end
     end
     # test below is somewhat weak, but acceptable; large variance
     mean_sim = mean(rand(Dy) for _ in 1:100000)
-    @test maximum(abs.(mean_sim .- mean(Dz))) ≤ 0.1
+    @test maximum(abs.(mean_sim .- mean(Dz))) ≤ 1
 end
 
 
