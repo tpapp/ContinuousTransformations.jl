@@ -202,7 +202,7 @@ The real numbers above `left`. See [`ℝ⁺`](@ref).
 @auto_hash_equals struct PositiveRay{T <: Real} <: AbstractInterval
     left::T
     function PositiveRay{T}(left::T) where T
-        isfinite(left) || throw(ArgumentError("Need finite endpoint."))
+        @argcheck isfinite(left) "Need finite endpoint."
         new(left)
     end
 end
@@ -227,7 +227,7 @@ The real numbers below `right`. See [`ℝ⁻`](@ref).
 @auto_hash_equals struct NegativeRay{T <: Real} <: AbstractInterval
     right::T
     function NegativeRay{T}(right::T) where T
-        isfinite(right) || throw(ArgumentError("Need finite endpoint."))
+        @argcheck isfinite(right) "Need finite endpoint."
         new(right)
     end
 end
@@ -254,10 +254,8 @@ The real numbers between `left` and `right`, with
     left::T
     right::T
     function Segment{T}(left::T, right::T) where T
-        isfinite(left) && isfinite(right) ||
-            throw(ArgumentError("Need finite endpoints."))
-        left < right ||
-            throw(ArgumentError("Need strictly increasing endpoints."))
+        @argcheck isfinite(left) && isfinite(right) "Need finite endpoints."
+        @argcheck left < right "Need strictly increasing endpoints."
         new(left, right)
     end
 end
@@ -398,7 +396,7 @@ Mapping ``ℝ → ℝ`` using ``x ↦ α⋅x + β``.
     α::T
     β::T
     function Affine{T}(α::T, β::T) where T
-        α > 0 || throw(DomainError())
+        @argcheck α > 0 DomainError()
         new(α, β)
     end
 end
@@ -720,7 +718,7 @@ struct ArrayTransformation{T <: UnivariateTransformation,
     transformation::T
     function ArrayTransformation(transformation::T,
                                  dims::Tuple{Vararg{Int64, N}}) where {T,N}
-        all(dims .> 0) || throw(ArgumentError("Invalid dimensions."))
+        @argcheck all(dims .> 0) "Invalid dimensions."
         new{T,dims}(transformation)
     end
 end
@@ -741,7 +739,7 @@ end
 (t::ArrayTransformation)(x) = reshape((t.transformation).(x), size(t))
 
 function logjac(t::ArrayTransformation, x)
-    length(x) == length(t) || throw(DimensionMismatch())
+    @argcheck length(x) == length(t) DimensionMismatch()
     lj(x) = logjac(t.transformation, x)
     sum(lj, x)
 end
@@ -910,8 +908,8 @@ struct TransformDistribution{D <: Union{ContinuousUnivariateDistribution,
     end
     function TransformDistribution(distribution::D, transformation::T) where
         {D <: ContinuousMultivariateDistribution, T <: GroupedTransformation}
-        length(distribution) == length(transformation) ||
-            throw(ArgumentError("Incompatible lengths."))
+        @argcheck(length(distribution) == length(transformation),
+                  "Incompatible lengths.")
         new{D,T}(distribution, transformation)
     end
 end
