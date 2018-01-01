@@ -1,7 +1,7 @@
 using ContinuousTransformations
 using Base.Test
 
-using Distributions
+using Distributions: logpdf, Normal, LogNormal, MvNormal, MvLogNormal
 import ForwardDiff: derivative
 using InferenceUtilities
 using Parameters
@@ -494,10 +494,7 @@ end
     t = ArrayTransformation(EXP, 3)
     Dy = TransformDistribution(Dx, t)
     Dz = MvLogNormal(μ, Σ)
-    mean_sim = mean(rand(Dy) for _ in 1:100000)
     @test length(Dy) == length(Dx)
-    # test below is somewhat weak, but acceptable; large variance
-    @test maximum(abs.(mean_sim .- mean(Dz))) ≤ 1
     @test get_transformation(Dy) ≡ t
     @test get_distribution(Dy) ≡ Dx
     for _ in 1:1000
@@ -507,6 +504,31 @@ end
         @test logpdf_in_domain(Dy, x) ≈ l
         @test logpdf_in_image(Dy, y) ≈ l
     end
+    # test below is somewhat weak, but acceptable; large variance
+    mean_sim = mean(rand(Dy) for _ in 1:100000)
+    @test maximum(abs.(mean_sim .- mean(Dz))) ≤ 1
+end
+
+@testset "transform univariate distribution" begin
+    μ = 2.7
+    σ = 1.3
+    Dx = Normal(μ, σ)
+    t = EXP
+    Dy = TransformDistribution(Dx, t)
+    Dz = LogNormal(μ, σ)
+    @test length(Dy) == length(Dx)
+    @test get_transformation(Dy) ≡ t
+    @test get_distribution(Dy) ≡ Dx
+    for _ in 1:1000
+        x = rand(Dx)
+        y = Dy(x)
+        l = logpdf(Dz, y)       # true logpdf from distribution
+        @test logpdf_in_domain(Dy, x) ≈ l
+        @test logpdf_in_image(Dy, y) ≈ l
+    end
+    # test below is somewhat weak, but acceptable; large variance
+    mean_sim = mean(rand(Dy) for _ in 1:100000)
+    @test maximum(abs.(mean_sim .- mean(Dz))) ≤ 0.1
 end
 
 

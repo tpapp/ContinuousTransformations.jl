@@ -897,11 +897,19 @@ The transformation object is callable with the same syntax as
 
 See also [`logpdf_in_domain`](@ref) and [`logpdf_in_image`](@ref).
 """
-struct TransformDistribution{D <: ContinuousMultivariateDistribution,
-                             T <: GroupedTransformation} <: TransformationWrapper
+struct TransformDistribution{D <: Union{ContinuousUnivariateDistribution,
+                                        ContinuousMultivariateDistribution},
+                             T <: Union{UnivariateTransformation,
+                                        GroupedTransformation}} <:
+                                            TransformationWrapper
     distribution::D
     transformation::T
-    function TransformDistribution(distribution::D, transformation::T) where {D,T}
+    function TransformDistribution(distribution::D, transformation::T) where
+        {D <: ContinuousUnivariateDistribution, T <: UnivariateTransformation}
+        new{D, T}(distribution, transformation)
+    end
+    function TransformDistribution(distribution::D, transformation::T) where
+        {D <: ContinuousMultivariateDistribution, T <: GroupedTransformation}
         length(distribution) == length(transformation) ||
             throw(ArgumentError("Incompatible lengths."))
         new{D,T}(distribution, transformation)
