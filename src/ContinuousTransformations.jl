@@ -957,6 +957,7 @@ end
 
 
 # misc utilities
+# NOTE: may be experimental, removed/redesigned
 
 """
     $SIGNATURES
@@ -1004,5 +1005,15 @@ julia> B = map_to_arrays(f, A)
 ```
 """
 map_to_arrays(f, A::AbstractArray) = _map_to_arrays(f, f(first(A)), A)
+
+"""
+    $SIGNATURES
+
+FIXME
+"""
+function map_to_array_columns(f, A)
+    B = map_to_arrays(f, A)
+    map(b -> hcat(b...), B)
+end
 
 end
