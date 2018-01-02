@@ -540,8 +540,8 @@ end
     t = TransformationTuple((a, b))
     N = 100
     A = [randn(3) for _ in 1:N]
-    B = ungroup(Vector, t, A)
-    C = ungroup(Array, t, A)
+    B = ungrouping_map(Vector, t, A)
+    C = ungrouping_map(Array, t, A)
     for i in 1:N
         z = t(A[i])
         @test B[1][i] == z[1]

@@ -31,7 +31,7 @@ export
     TransformationWrapper, TransformLogLikelihood, get_loglikelihood,
     TransformDistribution, get_distribution, logpdf_in_domain, logpdf_in_image,
     # utilities
-    ungroup
+    ungrouping_map
 
 import Base:
     in, length, size, ∘, show, getindex, middle, linspace, intersect, extrema,
@@ -977,21 +977,26 @@ Make a container for ungrouped results.
 
 The first argument, `Vector` or `Array`, determines the result of ungrouping.
 
-`elt` is a representative element, used to determine element type, and `len` is
-the length of the result.
+`representative_elt` is a representative element, used to determine element
+type and stucture, and `len` is the length of the result.
 """
 function make_ungrouped_container(::Type{Vector},
-                                  elt::AbstractArray{T}, len) where T
-    [Vector{T}(len) for _ in CartesianRange(indices(elt))]
+                                  representative_elt::AbstractArray{T},
+                                  len) where T
+    [Vector{T}(len) for _ in CartesianRange(indices(representative_elt))]
 end
 
-make_ungrouped_container(::Type{Array}, elt::AbstractArray{T}, len) where T =
-    Array{T}(len, size(elt)...)
+function make_ungrouped_container(::Type{Array},
+                                  representative_elt::AbstractArray{T},
+                                  len) where T
+    Array{T}(len, size(representative_elt)...)
+end
 
-make_ungrouped_container(T, elt::Tuple, len) =
-    map(x -> make_ungrouped_container(T, x, len), elt)
+make_ungrouped_container(T, representative_elt::Tuple, len) =
+    map(x -> make_ungrouped_container(T, x, len), representative_elt)
 
-make_ungrouped_container(_, elt::T, len) where {T <: Real} = Vector{T}(len)
+make_ungrouped_container(_, representative_elt::T, len) where {T <: Real} =
+    Vector{T}(len)
 
 """
     $SIGNATURES
@@ -1019,18 +1024,24 @@ ungroup_elt!(_, container::AbstractVector, elt::Number, i) = container[i] = elt
 """
     $SIGNATURES
 
-Transform the vector `A` elementwise using `transformation`, and collect the
-results in arrays or vectors organized as a single result from `transformation`.
+Map the vector `A` elementwise using `f`, and collect the results in arrays or
+vectors organized as a single result from `f`. For example, if `f` returns
+tuples, this function returns tuples of vectors.
 
-The shape of the result is determined by the first argument, which can be `Vector` or `Array`. The difference is that `Array` stacks arrays
+The shape of the result is determined by the first argument, which can be
+`Vector` or `Array`. The difference is that `Array` stacks arrays into arrays,
+while `Vector` does not.
+
+`Array` may be more useful for summaries along dimensions, eg `mean` and
+similar.
 """
-function ungroup(T, transformation::GroupedTransformation, A::AbstractVector)
+function ungrouping_map(T, f, A::AbstractVector)
     n = length(A)
-    first_transformed = transformation(A[1])
-    container = make_ungrouped_container(T, first_transformed, n)
-    ungroup_elt!(T, container, first_transformed, 1)
+    representative_elt = f(A[1])
+    container = make_ungrouped_container(T, representative_elt, n)
+    ungroup_elt!(T, container, representative_elt, 1)
     for i in 2:n
-        ungroup_elt!(T, container, transformation(A[i]), i)
+        ungroup_elt!(T, container, f(A[i]), i)
     end
     container
 end
