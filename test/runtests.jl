@@ -2,7 +2,7 @@ using ContinuousTransformations
 using Base.Test
 
 using Distributions: logpdf, Normal, LogNormal, MvNormal, MvLogNormal
-import ForwardDiff: derivative
+import ForwardDiff: derivative, jacobian
 using InferenceUtilities
 using Parameters
 
@@ -331,6 +331,27 @@ end
     show(io, MIME"text/plain"(), t)
     s = String(take!(io))
     @test s == repr(t) * "\n"
+end
+
+
+# unit vector transformation
+
+@testset "UnitVector calculations" begin
+    for _ in 1:1000
+        u = UnitVector(rand(2:10))
+        z = randn(length(u))
+        y, lj = transform_and_logjac(u, z)
+        @test norm(y, 2) ≈ 1.0
+        @test logdet(jacobian(z -> transform(u, z)[1:(end-1)], z)) ≈ lj
+    end
+end
+
+@testset "UnitVector misc" begin
+    @test repr(UnitVector(4)) == "x ↦ UnitVector(x)"
+    @test_throws ArgumentError UnitVector(-7)
+    @test_throws ArgumentError UnitVector(0)
+    @test transform(UnitVector(1), Float64[]) == [1.0]
+    @test_throws ArgumentError transform(UnitVector(4), ones(4))
 end
 
 

@@ -18,12 +18,17 @@ export
     # intervals
     AbstractInterval, RealLine, ℝ, PositiveRay, ℝ⁺, NegativeRay, ℝ⁻,
     Segment, width,
+    # general API
+    domain, image, isincreasing, transform, inverse,
+    logjac, transform_and_logjac, transform_and_logjac!, @increment_logjac,
     # univariate transformations
-    UnivariateTransformation, domain, image, isincreasing, inverse, logjac,
+    UnivariateTransformation,
     Affine, IDENTITY,
     Negation, NEGATION, Logistic, LOGISTIC, RealCircle, REALCIRCLE, Exp, EXP,
     Logit, LOGIT, InvRealCircle, INVREALCIRCLE, Log, LOG,
     affine_bridge, default_transformation, bridge,
+    # multivariate transformations
+    UnitVector,
     # grouped transformations
     GroupedTransformation, get_transformation, ArrayTransformation,
     TransformationTuple,
@@ -126,6 +131,53 @@ $TYPEDEF
 Continuous bijection ``D ⊂ ℝ^n→ I ⊂ ℝ^n`` or ``D ⊂ ℝ → I ⊂ ℝ``.
 """
 abstract type ContinuousTransformation <: Function end
+
+"""
+    transform(t, x)
+
+Return ``t(x)``. NOTE: this equivalent to the callable syntax `t(x)`, which is
+also available.
+"""
+transform(t::ContinuousTransformation, x) = t(x)
+
+"""
+    y, logjac = $SIGNATURES
+
+Return the transformed value and the determinant of the log Jacobian.
+
+Equivalent to `t(x), logjac(t, x)`, but may be faster because of reused
+components.
+"""
+function transform_and_logjac(t::ContinuousTransformation, x)
+    transform(t, x), logjac(t, x)
+end
+
+"""
+    $SIGNATURES
+
+Return `transformation(x)` while incrementing `logjac` with the log Jacobian
+determinant.
+"""
+macro increment_logjac(logjac, transformation, x)
+    quote
+        y, lj = transform_and_logjac($(esc(transformation)), $(esc(x)))
+        $(esc(logjac)) += lj
+        y
+    end
+end
+
+"""
+    $SIGNATURES
+
+Return `transformation(x)` while incrementing `logjac` with the log Jacobian
+determinant.
+"""
+macro increment_logjac(logjac, transformation_x)
+    @capture transformation_x transformation_(x_)
+    quote
+        @increment_logjac $(esc(logjac)) $(esc(transformation)) $(esc(x))
+    end
+end
 
 """
     rhs_string(transformation, term)
@@ -669,6 +721,63 @@ bridge(dom, img::RealLine, t = default_transformation(dom, img)) =
     t ∘ affine_bridge(dom, domain(t))
 
 bridge(::RealLine, ::RealLine) = IDENTITY
+
+
+# Special constants
+
+"""
+Hyperbolic tangent transformation.
+
+An affine stretch of LOGISTIC to (-1, 1).
+"""
+const TANH = bridge(ℝ, Segment(-1.0, 1.0), LOGISTIC)
+
+
+# UnitVector
+
+"""
+    UnitVector(n)
+
+Transform `n-1` real numbers to a unit vector of length `n`, under the Euclidean
+norm.
+"""
+struct UnitVector <: ContinuousTransformation
+    n::Int
+    function UnitVector(n::Int)
+        @argcheck n ≥ 1 "Dimension should be positive."
+        new(n)
+    end
+end
+
+length(t::UnitVector) = t.n - 1
+
+rhs_string(::UnitVector, term) = "UnitVector($term)"
+
+function transform_and_logjac!(ys::AbstractVector{T}, t::UnitVector,
+                               xs::AbstractVector) where T
+    @unpack n = t
+    @argcheck length(xs) == n - 1
+    @argcheck length(ys) == n
+    remainder = one(T)
+    logjac = zero(T)
+    for (i, x) in enumerate(xs)
+        z = @increment_logjac logjac TANH(x)
+        ys[i] = z * √remainder
+        logjac += log(remainder) / 2
+        remainder -= abs2(z) * remainder
+    end
+    ys[end] = √remainder
+    ys, logjac
+end
+
+function transform_and_logjac(t::UnitVector, zs::AbstractVector{T}) where T
+    ys = Array{T}(t.n)
+    transform_and_logjac!(ys, t, zs)
+end
+
+(t::UnitVector)(zs) = transform_and_logjac(t, zs)[1]
+
+logjac(t::UnitVector, zs) = transform_and_logjac(t, zs)[2]
 
 
 # grouped transformations
