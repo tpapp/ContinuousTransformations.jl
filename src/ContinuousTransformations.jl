@@ -20,7 +20,7 @@ export
     Segment, width,
     # general API
     domain, image, isincreasing, transform, inverse,
-    logjac, transform_and_logjac, transform_and_logjac!, @increment_logjac,
+    logjac, transform_and_logjac, @increment_logjac,
     # univariate transformations
     UnivariateTransformation,
     Affine, IDENTITY,
