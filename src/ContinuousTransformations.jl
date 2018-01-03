@@ -28,7 +28,7 @@ export
     Logit, LOGIT, InvRealCircle, INVREALCIRCLE, Log, LOG,
     affine_bridge, default_transformation, bridge,
     # multivariate transformations
-    UnitVector,
+    UnitVector, CorrelationCholeskyFactor,
     # grouped transformations
     GroupedTransformation, get_transformation, ArrayTransformation,
     TransformationTuple,
@@ -88,6 +88,19 @@ Placeholder for `Base.fma` until
 https://github.com/JuliaDiff/ReverseDiff.jl/issues/86 is fixed.
 """
 _fma(x, y, z) = x*y+z
+
+"""
+    $SIGNATURES
+
+Define [`transform`](@ref) and [`logjac`](@ref) using
+[`transform_and_logjac`](@ref).
+"""
+macro define_from_transform_and_logjac(T)
+    quote
+        (t::$T)(x) = transform_and_logjac(t, x)[1]
+        logjac(t::$T, x) = transform_and_logjac(t, x)[2]
+    end
+end
 
 
 # abstract interface for transformations
@@ -751,7 +764,7 @@ end
 
 length(t::UnitVector) = t.n - 1
 
-rhs_string(::UnitVector, term) = "UnitVector($term)"
+rhs_string(t::UnitVector, term) = "UnitVector($(t.n))($term)"
 
 function transform_and_logjac!(ys::AbstractVector{T}, t::UnitVector,
                                xs::AbstractVector) where T
@@ -775,9 +788,50 @@ function transform_and_logjac(t::UnitVector, zs::AbstractVector{T}) where T
     transform_and_logjac!(ys, t, zs)
 end
 
-(t::UnitVector)(zs) = transform_and_logjac(t, zs)[1]
+@define_from_transform_and_logjac UnitVector
 
-logjac(t::UnitVector, zs) = transform_and_logjac(t, zs)[2]
+
+# Cholesky factor of a correlation matrix
+
+"""
+    CorrelationCholeskyFactor(n)
+
+Cholesky factor of a correlation matrix of size `n`.
+"""
+struct CorrelationCholeskyFactor <: ContinuousTransformation
+    n::Int
+    function CorrelationCholeskyFactor(n)
+        @argcheck n ≥ 1 "Dimension should be positive."
+        new(n)
+    end
+end
+
+function length(t::CorrelationCholeskyFactor)
+    @unpack n = t
+    n * (n-1) ÷ 2
+end
+
+rhs_string(t::CorrelationCholeskyFactor, term) =
+    "CorrelationCholeskyFactor($(t.n))($term)"
+
+function transform_and_logjac(t::CorrelationCholeskyFactor,
+                              x::AbstractVector{T}) where T
+    @unpack n = t
+    @argcheck length(x) == length(t)
+    logjac = zero(T)
+    cumulative_index = 0
+    L = zeros(T, n, n)
+    for i in 1:n
+        k = i - 1
+        _, lj = transform_and_logjac!(@view(L[i, 1:i]), UnitVector(i),
+                                      @view(x[cumulative_index + (1:k)]))
+        logjac += lj
+        cumulative_index += k
+    end
+    LowerTriangular(L), logjac
+end
+
+@define_from_transform_and_logjac CorrelationCholeskyFactor
 
 
 # grouped transformations

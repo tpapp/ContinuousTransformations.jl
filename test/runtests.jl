@@ -347,12 +347,42 @@ end
 end
 
 @testset "UnitVector misc" begin
-    @test repr(UnitVector(4)) == "x ↦ UnitVector(x)"
+    @test repr(UnitVector(4)) == "x ↦ UnitVector(4)(x)"
     @test_throws ArgumentError UnitVector(-7)
     @test_throws ArgumentError UnitVector(0)
     @test transform(UnitVector(1), Float64[]) == [1.0]
     @test_throws ArgumentError transform(UnitVector(4), ones(4))
 end
+
+@testset "CorrelationCholeskyFactor calculations" begin
+    for _ in 1:1000
+        n = rand(2:10)
+        c = CorrelationCholeskyFactor(n)
+        z = randn(length(c))
+        L, lj = transform_and_logjac(c, z)
+        @test L isa LowerTriangular
+        @test size(L) == (n, n)
+        Σ = L*L'
+        @test all(diag(Σ) .≈ 1)         # unit diagonal
+        @test all(eigvals(Σ) .> 0)      # PD
+        J = jacobian(z) do z
+            L = transform(c, z)
+            vcat((L[i, 1:(i-1)] for i in 1:n)...)
+        end
+        @test logdet(J) ≈ lj
+    end
+end
+
+@testset "CorrelationCholeskyFactor misc" begin
+    @test repr(CorrelationCholeskyFactor(4)) ==
+        "x ↦ CorrelationCholeskyFactor(4)(x)"
+    @test_throws ArgumentError CorrelationCholeskyFactor(-7)
+    @test_throws ArgumentError CorrelationCholeskyFactor(0)
+    @test transform(CorrelationCholeskyFactor(1), Float64[]) ==
+        LowerTriangular(fill(1.0, 1, 1))
+    @test_throws ArgumentError transform(CorrelationCholeskyFactor(4), ones(4))
+end
+
 
 
 # array transformations
