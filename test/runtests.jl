@@ -354,7 +354,6 @@ end
     @test repr(Affine(1,0)) == "x ↦ x"
     @test repr(Affine(2,0)) == "x ↦ 2.0⋅x"
     @test repr(Affine(2,3)) == "x ↦ 2.0⋅x + 3.0"
-    @test repr(bridge(ℝ, Segment(0,1))) == "x ↦ 0.5⋅realcircle(x) + 0.5"
 end
 
 @testset "show MIME method" begin
@@ -497,7 +496,7 @@ TransformationTuple
     x[2] ↦ -exp(x[2]) + 1.0
     x[3] ↦ -exp(x[3]) + 1.0
     x[4] ↦ x[4]
-    x[5] ↦ 0.5⋅realcircle(x[5]) + 0.5"""
+    x[5] ↦ logistic(x[5])"""
     for i in 1:length(ts)
         @test tt[i] == ts[i]
     end
@@ -569,7 +568,7 @@ end
 
     @test repr(tℓ) == """
 TransformLogLikelihood of length 2, with TransformationTuple
-    x[1] ↦ 0.5⋅realcircle(x[1]) + 0.5
+    x[1] ↦ logistic(x[1])
     x[2] ↦ exp(x[2])"""
 end
 

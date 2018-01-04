@@ -719,11 +719,11 @@ affine_bridge(x::NegativeRay, y::PositiveRay) =
 Return a transformation from `dom` that can be mapped to `img` using
 `affine_bridge`.
 """
-default_transformation(::RealLine, ::Segment) = REALCIRCLE
+default_transformation(::RealLine, ::Segment) = LOGISTIC
 default_transformation(::RealLine, ::PositiveRay) = EXP
 default_transformation(::RealLine, ::NegativeRay) = EXP
 
-default_transformation(::Segment, ::RealLine) = INVREALCIRCLE
+default_transformation(::Segment, ::RealLine) = LOGIT
 default_transformation(::PositiveRay, ::RealLine) = LOG
 default_transformation(::NegativeRay, ::RealLine) = LOG
 
