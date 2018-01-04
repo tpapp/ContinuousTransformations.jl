@@ -7,7 +7,7 @@ using InferenceUtilities
 using Parameters
 
 
-# test: utilities
+# utilities
 
 "Test singleton type."
 ContinuousTransformations.@define_singleton TestSingleton <: Real
@@ -34,6 +34,38 @@ rand_in(ray::PositiveRay) = ray.left + randn()^2
 rand_in(ray::NegativeRay) = ray.right - randn()^2
 
 rand_in(::RealLine) = randn()
+
+"Elements below the diagonal as a vector (by row)."
+lower_to_vec(L) = vcat((L[i, 1:(i-1)] for i in 1:size(L, 1))...)
+
+"Elements below and including the diagonal as a vector (by row)."
+lowerdiag_to_vec(L) = vcat((L[i, 1:i] for i in 1:size(L, 1))...)
+
+"""
+Reconstruct lower triangular matrix (including diagonal) from a vector of
+elemenst (by row).
+"""
+function vec_to_lowerdiag(l::AbstractVector{T}, n::Int) where T
+    A = zeros(T, n, n)
+    cumulative_index = 0
+    for i in 1:n
+        A[i, 1:i] .= l[cumulative_index + (1:i)]
+        cumulative_index += i
+    end
+    LowerTriangular(A)
+end
+
+@testset "vec lower utilities" begin
+    l = Float64.(1:6)
+    L = vec_to_lowerdiag(l, 3)
+    @test size(L) == (3, 3)
+    @test eltype(L) == eltype(l)
+    @test L == [1.0 0.0 0.0;
+                2.0 3.0 0.0;
+                4.0 5.0 6.0]
+    @test lowerdiag_to_vec(L) == l
+    @test lower_to_vec(L) == [2.0, 4.0, 5.0]
+end
 
 
 # test: intervals
@@ -354,7 +386,7 @@ end
     @test_throws ArgumentError transform(UnitVector(4), ones(4))
 end
 
-@testset "CorrelationCholeskyFactor calculations" begin
+@testset "CorrelationCholeskyFactor calculations, full logjac" begin
     for _ in 1:1000
         n = rand(2:10)
         c = CorrelationCholeskyFactor(n)
@@ -365,11 +397,21 @@ end
         Σ = L*L'
         @test all(diag(Σ) .≈ 1)         # unit diagonal
         @test all(eigvals(Σ) .> 0)      # PD
+        # test Jacobian for this transformation
         J = jacobian(z) do z
             L = transform(c, z)
-            vcat((L[i, 1:(i-1)] for i in 1:n)...)
+            lower_to_vec(L)
         end
         @test logdet(J) ≈ lj
+        # test Jacobian for reconstruction of a full matrix
+        # NOTE: test is here because it is related and we already generated L
+        z_full = lowerdiag_to_vec(L)
+        J_full = jacobian(z_full) do z
+            L = vec_to_lowerdiag(z, n)
+            Ω = L*L'
+            lowerdiag_to_vec(Ω)
+        end
+        @test logdet(J_full) ≈ cholesky_to_full_logjac(L)
     end
 end
 
@@ -382,7 +424,6 @@ end
         LowerTriangular(fill(1.0, 1, 1))
     @test_throws ArgumentError transform(CorrelationCholeskyFactor(4), ones(4))
 end
-
 
 
 # array transformations

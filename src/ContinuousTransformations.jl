@@ -28,7 +28,7 @@ export
     Logit, LOGIT, InvRealCircle, INVREALCIRCLE, Log, LOG,
     affine_bridge, default_transformation, bridge,
     # multivariate transformations
-    UnitVector, CorrelationCholeskyFactor,
+    UnitVector, CorrelationCholeskyFactor, cholesky_to_full_logjac,
     # grouped transformations
     GroupedTransformation, get_transformation, ArrayTransformation,
     TransformationTuple,
@@ -832,6 +832,31 @@ function transform_and_logjac(t::CorrelationCholeskyFactor,
 end
 
 @define_from_transform_and_logjac CorrelationCholeskyFactor
+
+
+# helper function for Cholesky decompositions
+
+"""
+    $SIGNATURES
+
+Return the log determinant of the Jacobian of transforming the non-zero part of
+a cholesky factor `L` (can be upper or lower triangular) to ``LL'``.
+
+Technically, we consider half of the resulting symmetric matrix, making this a
+bijection.
+
+
+!!! NOTE
+
+    This is not defined as a transformation since generally it is advantageous
+    to just use the Cholesky factor for calculations without reconstructing the
+    full matrix.
+"""
+function cholesky_to_full_logjac(L::Union{LowerTriangular, UpperTriangular})
+    z = diag(L)
+    n = size(L, 1)
+    sum(log.(z) .* (n:-1:1)) + log(2) * n
+end
 
 
 # grouped transformations
