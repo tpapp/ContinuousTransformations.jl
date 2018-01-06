@@ -822,10 +822,15 @@ struct CorrelationCholeskyFactor <: ContinuousTransformation
     end
 end
 
-function length(t::CorrelationCholeskyFactor)
-    @unpack n = t
-    n * (n-1) ÷ 2
-end
+"""
+    $SIGNATURES
+
+Number of elements in a triangle of an ``n×n`` square matrix, including the
+diagonal.
+"""
+triangle_length(n) = n * (n-1) ÷ 2
+
+length(t::CorrelationCholeskyFactor) = triangle_length(t.n)
 
 rhs_string(t::CorrelationCholeskyFactor, term) =
     "CorrelationCholeskyFactor($(t.n))($term)"
@@ -848,6 +853,21 @@ function transform_and_logjac(t::CorrelationCholeskyFactor,
 end
 
 @define_from_transform_and_logjac CorrelationCholeskyFactor
+
+function inverse(t::CorrelationCholeskyFactor,
+                 L::LowerTriangular{T}) where T
+    @unpack n = t
+    @argcheck size(L) == (n, n)
+    x = Vector{T}(triangle_length(n))
+    cumulative_index = 0
+    for i in 1:n
+        k = i - 1
+        inverse!(@view(x[cumulative_index + (1:k)]), UnitVector(i),
+                 @view(L[i, 1:i]))
+        cumulative_index += k
+    end
+    x
+end
 
 
 # helper function for Cholesky decompositions

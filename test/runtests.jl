@@ -393,11 +393,13 @@ end
         c = CorrelationCholeskyFactor(n)
         z = randn(length(c))
         L, lj = transform_and_logjac(c, z)
+        z2 = inverse(c, L)
         @test L isa LowerTriangular
         @test size(L) == (n, n)
         Σ = L*L'
         @test all(diag(Σ) .≈ 1)         # unit diagonal
         @test all(eigvals(Σ) .> 0)      # PD
+        @test z ≈ z2
         # test Jacobian for this transformation
         J = jacobian(z) do z
             L = transform(c, z)
