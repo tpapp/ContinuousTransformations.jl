@@ -766,8 +766,8 @@ length(t::UnitVector) = t.n - 1
 
 rhs_string(t::UnitVector, term) = "UnitVector($(t.n))($term)"
 
-function transform_and_logjac!(ys::AbstractVector{T}, t::UnitVector,
-                               xs::AbstractVector) where T
+function transform_and_logjac!(ys::AbstractVector{T},
+                               t::UnitVector, xs::AbstractVector) where T
     @unpack n = t
     @argcheck length(xs) == n - 1
     @argcheck length(ys) == n
