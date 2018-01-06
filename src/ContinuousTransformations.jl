@@ -27,7 +27,7 @@ export
     Negation, NEGATION, Logistic, LOGISTIC, RealCircle, REALCIRCLE, Exp, EXP,
     Logit, LOGIT, InvRealCircle, INVREALCIRCLE, Log, LOG,
     affine_bridge, default_transformation, bridge,
-    # multivariate transformations
+    # multivariate transformations NOTE API may change
     UnitVector, CorrelationCholeskyFactor, cholesky_to_full_logjac,
     # grouped transformations
     GroupedTransformation, get_transformation, ArrayTransformation,
@@ -783,10 +783,26 @@ function transform_and_logjac!(ys::AbstractVector{T},
     ys, logjac
 end
 
-function transform_and_logjac(t::UnitVector, zs::AbstractVector{T}) where T
-    ys = Array{T}(t.n)
-    transform_and_logjac!(ys, t, zs)
+transform_and_logjac(t::UnitVector, zs::AbstractVector{T}) where T =
+    transform_and_logjac!(Array{T}(t.n), t, zs)
+
+function inverse!(xs::AbstractVector{T},
+                  t::UnitVector, ys::AbstractVector) where T
+    @unpack n = t
+    @argcheck length(xs) == n - 1
+    @argcheck length(ys) == n
+    remainder = one(T)
+    for i in 1:(n - 1)
+        y = ys[i]
+        z = y / √remainder
+        xs[i] = inverse(TANH, z)
+        remainder -= abs2(y)
+    end
+    xs
 end
+
+inverse(t::UnitVector, ys::AbstractVector{T}) where T =
+    inverse!(Array{T}(t.n - 1), t, ys)
 
 @define_from_transform_and_logjac UnitVector
 

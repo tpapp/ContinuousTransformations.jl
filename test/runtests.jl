@@ -370,10 +370,12 @@ end
 @testset "UnitVector calculations" begin
     for _ in 1:1000
         u = UnitVector(rand(2:10))
-        z = randn(length(u))
-        y, lj = transform_and_logjac(u, z)
+        x = randn(length(u))
+        y, lj = transform_and_logjac(u, x)
+        x2 = inverse(u, y)
         @test norm(y, 2) ≈ 1.0
-        @test logdet(jacobian(z -> transform(u, z)[1:(end-1)], z)) ≈ lj
+        @test logdet(jacobian(x -> transform(u, x)[1:(end-1)], x)) ≈ lj
+        @test x ≈ x2
     end
 end
 
