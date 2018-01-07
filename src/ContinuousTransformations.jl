@@ -96,9 +96,10 @@ Define [`transform`](@ref) and [`logjac`](@ref) using
 [`transform_and_logjac`](@ref).
 """
 macro define_from_transform_and_logjac(T)
+    S = esc(T)
     quote
-        (t::$T)(x) = transform_and_logjac(t, x)[1]
-        logjac(t::$T, x) = transform_and_logjac(t, x)[2]
+        (t::$S)(x) = transform_and_logjac(t, x)[1]
+        ContinuousTransformations.logjac(t::$S, x) = transform_and_logjac(t, x)[2]
     end
 end
 

@@ -372,6 +372,8 @@ end
         u = UnitVector(rand(2:10))
         x = randn(length(u))
         y, lj = transform_and_logjac(u, x)
+        lj2 = logjac(u, x)
+        @test lj == lj2
         x2 = inverse(u, y)
         @test norm(y, 2) ≈ 1.0
         @test logdet(jacobian(x -> transform(u, x)[1:(end-1)], x)) ≈ lj
@@ -393,6 +395,8 @@ end
         c = CorrelationCholeskyFactor(n)
         z = randn(length(c))
         L, lj = transform_and_logjac(c, z)
+        lj2 =logjac(c, z)
+        @test lj == lj2
         z2 = inverse(c, L)
         @test L isa LowerTriangular
         @test size(L) == (n, n)
