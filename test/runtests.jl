@@ -418,7 +418,7 @@ end
             Ω = L*L'
             lowerdiag_to_vec(Ω)
         end
-        @test logdet(J_full) ≈ cholesky_to_full_logjac(L)
+        @test logdet(J_full) ≈ lkj_correlation_cholesky_logpdf(L, 1.0)
     end
 end
 

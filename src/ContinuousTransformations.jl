@@ -28,7 +28,7 @@ export
     Logit, LOGIT, InvRealCircle, INVREALCIRCLE, Log, LOG,
     affine_bridge, default_transformation, bridge,
     # multivariate transformations NOTE API may change
-    UnitVector, CorrelationCholeskyFactor, cholesky_to_full_logjac,
+    UnitVector, CorrelationCholeskyFactor, lkj_correlation_cholesky_logpdf,
     # grouped transformations
     GroupedTransformation, get_transformation, ArrayTransformation,
     TransformationTuple,
@@ -876,23 +876,30 @@ end
 """
     $SIGNATURES
 
-Return the log determinant of the Jacobian of transforming the non-zero part of
-a cholesky factor `L` (can be upper or lower triangular) to ``LL'``.
+Log PDF of the LKJ distribution (Lewandowski et al 2009) for correlation
+matrices.
 
-Technically, we consider half of the resulting symmetric matrix, making this a
-bijection.
+A correlation matrix ``Ω=LL'`` has the density ``|Ω|^(η-1)``. However, it is
+usually not necessary to construct ``Ω``, so this function is parametrized in
+terms of a Cholesky decomposition `L`.
 
+Note that this function **does not check if `L` yields a valid correlation
+matrix**. Use [`CorrelationCholeskyFactor`](@ref) for generating valid
+arguments.
 
-!!! NOTE
+Valid values are ``η > 0``. When ``η > 1``, the distribution is unimodal at the
+identity, while ``0 < η < 1`` has a trough. ``η = 2`` is recommended as a vague
+prior.
 
-    This is not defined as a transformation since generally it is advantageous
-    to just use the Cholesky factor for calculations without reconstructing the
-    full matrix.
+When ``η = 1``, the density is uniform. Note however that the function should
+still be invoked, because of the Jacobian correction of the transformation.
 """
-function cholesky_to_full_logjac(L::Union{LowerTriangular, UpperTriangular})
+function lkj_correlation_cholesky_logpdf(L::Union{LowerTriangular,
+                                                  UpperTriangular}, η)
+    @argcheck η > 0
     z = diag(L)
     n = size(L, 1)
-    sum(log.(z) .* (n:-1:1)) + log(2) * n
+    sum(log.(z) .* ((n:-1:1) + 2*(η-1))) + log(2) * n
 end
 
 
