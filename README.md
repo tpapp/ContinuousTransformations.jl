@@ -42,12 +42,10 @@ image(t)           # Segment(0.0, 3.0)
 
 `TransformLogLikelihood` wraps a log likelihood function, and `TransformDistribution` transforms a distribution. Both of them take care of the log Jacobian determinant adjustment.
 
-## Planned
+Special transformations, useful for Bayesian methods, are also available (WIP). Feature and pull requests are appreciated.
 
-Vector- and matrix-variant transformations:
+## Bibliography
 
-1. Unit simplex and inverse transform (stick breaking),
-2. Unit vector,
-3. Correlation matrices (Lewandowski, D., Kurowicka, D., and Joe, H. 2009)
+- Stan Development Team (2017). "Modeling Language User's Guide and Reference Manual, Version 2.17.0" [(pdf)](http://mc-stan.org/users/documentation/)
 
-Pull requests are appreciated.
+- Lewandowski, Daniel, Dorota Kurowicka, and Harry Joe. "Generating random correlation matrices based on vines and extended onion method." Journal of multivariate analysis 100.9 (2009): 1989–2001.
