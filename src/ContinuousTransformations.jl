@@ -36,7 +36,7 @@ export
     TransformationWrapper, TransformLogLikelihood, get_loglikelihood,
     TransformDistribution, get_distribution, logpdf_in_domain, logpdf_in_image,
     # utilities
-    ungrouping_map
+    ungrouping_map, all_finite
 
 import Base:
     in, length, size, ∘, show, getindex, middle, linspace, intersect, extrema,
@@ -1277,5 +1277,18 @@ function ungrouping_map(T, f, A::AbstractVector)
     end
     container
 end
+
+"""
+    $SIGNATURES
+
+Test if a numerical argument is made up of finite real numbers.
+"""
+all_finite(x::Real) = isfinite(x)
+
+all_finite(A::AbstractArray{T}) where {T <: Real} = all(isfinite, A)
+
+all_finite(t::Tuple) = all(all_finite, t)
+
+all_finite(itr) = all(all_finite, itr)
 
 end

@@ -650,3 +650,26 @@ end
         @test C[2][i, :] == z[2]
     end
 end
+
+@testset "all_finite" begin
+    # scalars
+    @test all_finite(9)
+    @test all_finite(1.0)
+    @test !all_finite(Inf)
+    @test !all_finite(NaN)
+    @test !all_finite(-Inf)
+    # arrays
+    @test all_finite(fill(9.0, 2, 2))
+    @test !all_finite([1.0 Inf;
+                       0.0 2.0])
+    @test !all_finite([NaN])
+    # tuples
+    @test all_finite((1.0, [2.0, 3.0]))
+    @test !all_finite((1.0, [2.0, NaN]))
+    # iterables
+    @test all_finite((Float64(i)^2 for i in 1:10))
+    let k = 0
+        @test !all_finite(((k += 1; i ≤ 5 ? i : Inf) for i in 1:10))
+        @test k == 6            # test early termination
+    end
+end
