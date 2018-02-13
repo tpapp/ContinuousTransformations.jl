@@ -3,11 +3,22 @@ using Base.Test
 
 using Distributions: logpdf, Normal, LogNormal, MvNormal, MvLogNormal
 import ForwardDiff: derivative, jacobian
-using InferenceUtilities
 using Parameters
 
 
 # utilities
+
+"Boolean form of Test.@inferred."
+macro isinferred(ex)
+    quote
+        try
+            @inferred $(esc(ex))
+            true
+        catch err
+            isa(err, ErrorException) || rethrow(err)
+        end
+    end
+end
 
 "Test singleton type."
 ContinuousTransformations.@define_singleton TestSingleton <: Real
