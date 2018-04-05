@@ -19,8 +19,8 @@ export
     AbstractInterval, RealLine, ℝ, PositiveRay, ℝ⁺, NegativeRay, ℝ⁻,
     Segment, width,
     # general API
-    domain, image, isincreasing, transform, inverse,
-    logjac, transform_and_logjac, @increment_logjac,
+    domain, image, isincreasing, transform, inverse, logjac,
+    transform_and_logjac, @increment_logjac, ContinuousTransformation,
     # univariate transformations
     UnivariateTransformation,
     Affine, IDENTITY,
@@ -1059,7 +1059,7 @@ Wrap a transformation to achieve some specialized functionality.
 Supports `length`, [`get_transformation`](@ref), and other methods depending on
 the subtype.
 """
-abstract type TransformationWrapper end
+abstract type TransformationWrapper <: Function end
 
 
 # loglikelihood wrapper

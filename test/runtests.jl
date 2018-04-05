@@ -194,6 +194,15 @@ end
 
 # test: univariate transformation
 
+@testset "type hierarchy" begin
+    @test ContinuousTransformation <: Function
+    @test UnivariateTransformation <: ContinuousTransformation
+    @test GroupedTransformation <: ContinuousTransformation
+    @test CorrelationCholeskyFactor <: ContinuousTransformation
+    @test UnitVector <: ContinuousTransformation
+    @test TransformationWrapper <: Function
+end
+
 @testset "univariate transformation basics" begin
     @test_throws DomainError Affine(0, 1)
     @test_throws DomainError Affine(-1, 2.0)
