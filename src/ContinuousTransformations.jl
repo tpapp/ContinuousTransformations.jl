@@ -1030,10 +1030,23 @@ end
 
 next_indexes(acc, t::UnivariateTransformation) = acc+1, acc+1
 
-@unroll function transformation_indexes(ts)
+
+# @unroll function transformation_indexes(ts)
+#     acc = 0
+#     result = ()
+#     @unroll for t in ts
+#         acc, ix = next_indexes(acc, t)
+#         result = (result..., ix)
+#     end
+#     result
+# end
+
+# Above version gave BoundsError
+
+function transformation_indexes(ts)
     acc = 0
     result = ()
-    @unroll for t in ts
+    for t in ts
         acc, ix = next_indexes(acc, t)
         result = (result..., ix)
     end
