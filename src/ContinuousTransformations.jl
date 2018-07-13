@@ -44,6 +44,9 @@ import Base:
     in, length, size, ∘, show, getindex, middle, linspace, intersect, extrema,
     minimum, maximum, isfinite, isinf, isapprox
 
+using LinearAlgebra:
+    LowerTriangular, UpperTriangular
+
 const log1p = Base.Math.JuliaLibm.log1p # should be faster and more accurate
 
 

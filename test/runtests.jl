@@ -1,6 +1,7 @@
 using ContinuousTransformations
 using Test
 
+using LinearAlgebra: LowerTriangular
 using Distributions: logpdf, Normal, LogNormal, MvNormal, MvLogNormal
 import ForwardDiff: derivative, jacobian
 using Parameters
