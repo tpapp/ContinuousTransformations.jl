@@ -1,5 +1,5 @@
 using ContinuousTransformations
-using Base.Test
+using Test
 
 using Distributions: logpdf, Normal, LogNormal, MvNormal, MvLogNormal
 import ForwardDiff: derivative, jacobian

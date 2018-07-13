@@ -273,7 +273,7 @@ The real numbers above `left`. See [`ℝ⁺`](@ref).
     end
 end
 
-PositiveRay{T}(left::T) = PositiveRay{T}(left)
+PositiveRay(left::T) where {T} = PositiveRay{T}(left)
 
 in(x::Real, ray::PositiveRay) = ray.left ≤ x
 minimum(ray::PositiveRay) = ray.left
@@ -298,7 +298,7 @@ The real numbers below `right`. See [`ℝ⁻`](@ref).
     end
 end
 
-NegativeRay{T}(right::T) = NegativeRay{T}(right)
+NegativeRay(right::T) where {T} = NegativeRay{T}(right)
 
 in(x::Real, ray::NegativeRay) = x ≤ ray.right
 minimum(::NegativeRay{T}) where T = -T(Inf)
@@ -326,7 +326,7 @@ The real numbers between `left` and `right`, with
     end
 end
 
-Segment{T <: Real}(left::T, right::T) = Segment{T}(left, right)
+Segment(left::T, right::T) where {T <: Real} = Segment{T}(left, right)
 
 Segment(left::Real, right::Real) = Segment(promote(left, right)...)
 
@@ -346,7 +346,7 @@ width(s::Segment) = s.right - s.left
 
 middle(s::Segment) = middle(s.left, s.right)
 
-linspace(s::Segment, n = 50) = linspace(s.left, s.right, n)
+linspace(s::Segment, n = 50) = range(s.left, stop=s.right, length=n)
 
 
 # intersections
@@ -489,8 +489,8 @@ RR_stability(::Affine) = RRStable()
 
 function rhs_string(t::Affine, term)
     @unpack α, β = t
-    α == 1 || (term = "$(signif(α, 4))⋅" * term)
-    β == 0 || (term = term * " + $(signif(β, 4))")
+    α == 1 || (term = "$(round(α, sigdigits=4))⋅" * term)
+    β == 0 || (term = term * " + $(round(β, sigdigits=4))")
     term
 end
 
@@ -1215,7 +1215,7 @@ type and stucture, and `len` is the length of the result.
 function make_ungrouped_container(::Type{Vector},
                                   representative_elt::AbstractArray{T},
                                   len) where T
-    [Vector{T}(len) for _ in CartesianRange(indices(representative_elt))]
+    [Vector{T}(len) for _ in CartesianIndices(indices(representative_elt))]
 end
 
 function make_ungrouped_container(::Type{Array},
