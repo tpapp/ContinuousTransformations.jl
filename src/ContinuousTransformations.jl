@@ -13,6 +13,8 @@ using Parameters
 using StatsFuns
 using Lazy
 using Unrolled
+import Statistics:
+    middle
 
 export
     # intervals

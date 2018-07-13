@@ -4,7 +4,7 @@ using Test
 using Distributions: logpdf, Normal, LogNormal, MvNormal, MvLogNormal
 import ForwardDiff: derivative, jacobian
 using Parameters
-
+using Statistics: middle
 
 # utilities
 
