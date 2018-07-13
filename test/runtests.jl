@@ -61,7 +61,7 @@ function vec_to_lowerdiag(l::AbstractVector{T}, n::Int) where T
     A = zeros(T, n, n)
     cumulative_index = 0
     for i in 1:n
-        A[i, 1:i] .= l[cumulative_index + (1:i)]
+        A[i, 1:i] .= l[cumulative_index .+ (1:i)]
         cumulative_index += i
     end
     LowerTriangular(A)
