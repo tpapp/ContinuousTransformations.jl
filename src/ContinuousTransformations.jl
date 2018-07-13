@@ -41,7 +41,7 @@ export
     ungrouping_map, all_finite
 
 import Base:
-    in, length, size, ∘, show, getindex, middle, linspace, intersect, extrema,
+    in, length, size, ∘, show, getindex, linspace, intersect, extrema,
     minimum, maximum, isfinite, isinf, isapprox
 
 using LinearAlgebra:
