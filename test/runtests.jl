@@ -131,7 +131,7 @@ end
     # methods of seg
     @test width(seg) == 1.0
     @test middle(seg) == 1.5
-    @test linspace(seg, 10) == range(1.0, stop=2.0, length=10)
+    @test range(seg, 10) == range(1.0, stop=2.0, length=10)
     # numbers in posray
     @test 1.0 ∈ posray
     @test Inf ∈ posray
