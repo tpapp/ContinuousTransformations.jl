@@ -1,4 +1,4 @@
-julia 0.6
+julia 0.7
 ArgCheck
 AutoHashEquals
 Distributions
@@ -7,4 +7,4 @@ MacroTools
 Lazy
 Parameters
 StatsFuns
-Unrolled
+# Unrolled

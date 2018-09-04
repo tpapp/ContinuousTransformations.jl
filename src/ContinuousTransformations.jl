@@ -1,4 +1,3 @@
-__precompile__()
 module ContinuousTransformations
 
 import Base.rand
@@ -8,11 +7,12 @@ using AutoHashEquals
 import Distributions:
     ContinuousUnivariateDistribution, ContinuousMultivariateDistribution, logpdf
 using DocStringExtensions
+using LinearAlgebra
 using MacroTools
 using Parameters
 using StatsFuns
 using Lazy
-using Unrolled
+# using Unrolled
 
 export
     # intervals
@@ -38,11 +38,10 @@ export
     # utilities
     ungrouping_map, all_finite
 
-import Base:
-    in, length, size, ∘, show, getindex, middle, linspace, intersect, extrema,
-    minimum, maximum, isfinite, isinf, isapprox
+import Base: in, length, size, ∘, show, getindex, intersect, extrema, minimum,
+    maximum, isfinite, isinf, isapprox
 
-const log1p = Base.Math.JuliaLibm.log1p # should be faster and more accurate
+import Statistics: middle
 
 
 # utilities
@@ -346,8 +345,6 @@ width(s::Segment) = s.right - s.left
 
 middle(s::Segment) = middle(s.left, s.right)
 
-linspace(s::Segment, n = 50) = linspace(s.left, s.right, n)
-
 
 # intersections
 
@@ -462,7 +459,7 @@ Mapping ``ℝ → ℝ`` using ``x ↦ α⋅x + β``.
     α::T
     β::T
     function Affine{T}(α::T, β::T) where T
-        @argcheck α > 0 DomainError()
+        @argcheck α > 0 DomainError
         new(α, β)
     end
 end
@@ -489,8 +486,8 @@ RR_stability(::Affine) = RRStable()
 
 function rhs_string(t::Affine, term)
     @unpack α, β = t
-    α == 1 || (term = "$(signif(α, 4))⋅" * term)
-    β == 0 || (term = term * " + $(signif(β, 4))")
+    α == 1 || (term = "$(round(α; sigdigits = 4))⋅" * term)
+    β == 0 || (term = term * " + $(round(β, sigdigits = 4))")
     term
 end
 
@@ -785,7 +782,7 @@ function transform_and_logjac!(ys::AbstractVector{T},
 end
 
 transform_and_logjac(t::UnitVector, zs::AbstractVector{T}) where T =
-    transform_and_logjac!(Array{T}(t.n), t, zs)
+    transform_and_logjac!(Vector{T}(undef, t.n), t, zs)
 
 function inverse!(xs::AbstractVector{T},
                   t::UnitVector, ys::AbstractVector) where T
@@ -803,7 +800,7 @@ function inverse!(xs::AbstractVector{T},
 end
 
 inverse(t::UnitVector, ys::AbstractVector{T}) where T =
-    inverse!(Array{T}(t.n - 1), t, ys)
+    inverse!(Vector{T}(undef, t.n - 1), t, ys)
 
 @define_from_transform_and_logjac UnitVector
 
@@ -846,7 +843,7 @@ function transform_and_logjac(t::CorrelationCholeskyFactor,
     for i in 1:n
         k = i - 1
         _, lj = transform_and_logjac!(@view(L[i, 1:i]), UnitVector(i),
-                                      @view(x[cumulative_index + (1:k)]))
+                                      @view(x[cumulative_index .+ (1:k)]))
         logjac += lj
         cumulative_index += k
     end
@@ -859,11 +856,11 @@ function inverse(t::CorrelationCholeskyFactor,
                  L::LowerTriangular{T}) where T
     @unpack n = t
     @argcheck size(L) == (n, n)
-    x = Vector{T}(triangle_length(n))
+    x = Vector{T}(undef, triangle_length(n))
     cumulative_index = 0
     for i in 1:n
         k = i - 1
-        inverse!(@view(x[cumulative_index + (1:k)]), UnitVector(i),
+        inverse!(@view(x[cumulative_index .+ (1:k)]), UnitVector(i),
                  @view(L[i, 1:i]))
         cumulative_index += k
     end
@@ -899,7 +896,7 @@ function lkj_correlation_cholesky_logpdf(L::Union{LowerTriangular,
     @argcheck η > 0
     z = diag(L)
     n = size(L, 1)
-    sum(log.(z) .* ((n:-1:1) + 2*(η-1))) + log(2) * n
+    sum(log.(z) .* ((n:-1:1) .+ 2*(η-1))) + log(2) * n
 end
 
 
@@ -1020,15 +1017,15 @@ getindex(t::TransformationTuple, ix) = t.transformations[ix]
 
 function next_indexes(acc, t)
     l = length(t)
-    acc + l, acc + (1:l)
+    acc + l, acc .+ (1:l)
 end
 
 next_indexes(acc, t::UnivariateTransformation) = acc+1, acc+1
 
-@unroll function transformation_indexes(ts)
+#=@unroll=# function transformation_indexes(ts)
     acc = 0
     result = ()
-    @unroll for t in ts
+    #=@unroll=# for t in ts
         acc, ix = next_indexes(acc, t)
         result = (result..., ix)
     end
@@ -1215,20 +1212,20 @@ type and stucture, and `len` is the length of the result.
 function make_ungrouped_container(::Type{Vector},
                                   representative_elt::AbstractArray{T},
                                   len) where T
-    [Vector{T}(len) for _ in CartesianRange(indices(representative_elt))]
+    [Vector{T}(undef, len) for _ in CartesianIndices(axes(representative_elt))]
 end
 
 function make_ungrouped_container(::Type{Array},
                                   representative_elt::AbstractArray{T},
                                   len) where T
-    Array{T}(len, size(representative_elt)...)
+    Array{T}(undef, len, size(representative_elt)...)
 end
 
 make_ungrouped_container(T, representative_elt::Tuple, len) =
     map(x -> make_ungrouped_container(T, x, len), representative_elt)
 
 make_ungrouped_container(_, representative_elt::T, len) where {T <: Real} =
-    Vector{T}(len)
+    Vector{T}(undef, len)
 
 """
     $SIGNATURES
@@ -1241,7 +1238,7 @@ ungroup_elt!(T, container::NTuple{N, Any}, elt::NTuple{N, Any}, i) where N =
 
 function ungroup_elt!(::Type{Vector}, container::AbstractArray,
                       elt::AbstractArray, i)
-    @argcheck indices(container) == indices(elt)
+    @argcheck axes(container) == axes(elt)
     for j in 1:length(elt)
         ungroup_elt!(Vector, container[j], elt[j], i)
     end
