@@ -53,7 +53,7 @@ var documenterSearchIndex = {"docs": [
     "page": "General API",
     "title": "ContinuousTransformations.ContinuousTransformation",
     "category": "type",
-    "text": "abstract ContinuousTransformation <: Function\n\nContinuous bijection D  ^n I  ^n or D    I  .\n\n\n\n"
+    "text": "abstract type ContinuousTransformation <: Function\n\nContinuous bijection D  ^n I  ^n or D    I  .\n\n\n\n"
 },
 
 {
@@ -117,7 +117,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Intervals and univariate transformations",
     "title": "ContinuousTransformations.AbstractInterval",
     "category": "type",
-    "text": "abstract AbstractInterval\n\nAbstract supertype for all univariate intervals. It is not specified whether they are open or closed.\n\n\n\n"
+    "text": "abstract type AbstractInterval\n\nAbstract supertype for all univariate intervals. It is not specified whether they are open or closed.\n\n\n\n"
 },
 
 {
@@ -205,7 +205,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Intervals and univariate transformations",
     "title": "ContinuousTransformations.UnivariateTransformation",
     "category": "type",
-    "text": "abstract UnivariateTransformation <: ContinuousTransformations.ContinuousTransformation\n\nUnivariate monotone transformation, either increasing or decreasing on the whole domain (thus, a bijection).\n\n\n\n"
+    "text": "abstract type UnivariateTransformation <: ContinuousTransformations.ContinuousTransformation\n\nUnivariate monotone transformation, either increasing or decreasing on the whole domain (thus, a bijection).\n\n\n\n"
 },
 
 {
@@ -389,7 +389,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Grouped transformations",
     "title": "ContinuousTransformations.GroupedTransformation",
     "category": "type",
-    "text": "abstract GroupedTransformation <: ContinuousTransformations.ContinuousTransformation\n\nAbstract type for grouped transformations.\n\nA grouped transformation takes a vector, and transforms contiguous blocks of elements to some output type, determined by the specific transformation type.\n\nAll subtypes support\n\nlength: return the length of the vector that can be used as an argument\ncallable object for the transformation\nlogjac, and inverse,\ndomain and image, which may have specific interpretation for their result types depending on the concrete subtype.\n\n\n\n"
+    "text": "abstract type GroupedTransformation <: ContinuousTransformations.ContinuousTransformation\n\nAbstract type for grouped transformations.\n\nA grouped transformation takes a vector, and transforms contiguous blocks of elements to some output type, determined by the specific transformation type.\n\nAll subtypes support\n\nlength: return the length of the vector that can be used as an argument\ncallable object for the transformation\nlogjac, and inverse,\ndomain and image, which may have specific interpretation for their result types depending on the concrete subtype.\n\n\n\n"
 },
 
 {
@@ -437,7 +437,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Wrapped transformations",
     "title": "ContinuousTransformations.TransformationWrapper",
     "category": "type",
-    "text": "abstract TransformationWrapper <: Function\n\nWrap a transformation to achieve some specialized functionality.\n\nSupports length, get_transformation, and other methods depending on the subtype.\n\n\n\n"
+    "text": "abstract type TransformationWrapper <: Function\n\nWrap a transformation to achieve some specialized functionality.\n\nSupports length, get_transformation, and other methods depending on the subtype.\n\n\n\n"
 },
 
 {
@@ -533,7 +533,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Internals",
     "title": "ContinuousTransformations.RRStability",
     "category": "type",
-    "text": "abstract RRStability\n\nTrait that is useful for domain and image calculations. See RRStable.\n\n\n\n"
+    "text": "abstract type RRStability\n\nTrait that is useful for domain and image calculations. See RRStable.\n\n\n\n"
 },
 
 {
