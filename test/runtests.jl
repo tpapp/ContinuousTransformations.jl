@@ -1,10 +1,11 @@
 using ContinuousTransformations
-using Base.Test
+using Test
 
+using LinearAlgebra: LowerTriangular
 using Distributions: logpdf, Normal, LogNormal, MvNormal, MvLogNormal
 import ForwardDiff: derivative, jacobian
 using Parameters
-
+using Statistics: middle
 
 # utilities
 
@@ -60,7 +61,7 @@ function vec_to_lowerdiag(l::AbstractVector{T}, n::Int) where T
     A = zeros(T, n, n)
     cumulative_index = 0
     for i in 1:n
-        A[i, 1:i] .= l[cumulative_index + (1:i)]
+        A[i, 1:i] .= l[cumulative_index .+ (1:i)]
         cumulative_index += i
     end
     LowerTriangular(A)
@@ -130,7 +131,7 @@ end
     # methods of seg
     @test width(seg) == 1.0
     @test middle(seg) == 1.5
-    @test linspace(seg, 10) == linspace(1.0, 2.0, 10)
+    @test range(seg, 10) == range(1.0, stop=2.0, length=10)
     # numbers in posray
     @test 1.0 ∈ posray
     @test Inf ∈ posray

@@ -13,6 +13,8 @@ using Parameters
 using StatsFuns
 using Lazy
 using Unrolled
+import Statistics:
+    middle
 
 export
     # intervals
@@ -39,8 +41,11 @@ export
     ungrouping_map, all_finite
 
 import Base:
-    in, length, size, ∘, show, getindex, middle, linspace, intersect, extrema,
+    in, length, size, ∘, show, getindex, linspace, intersect, extrema,
     minimum, maximum, isfinite, isinf, isapprox
+
+using LinearAlgebra:
+    LowerTriangular, UpperTriangular
 
 const log1p = Base.Math.JuliaLibm.log1p # should be faster and more accurate
 
@@ -346,7 +351,7 @@ width(s::Segment) = s.right - s.left
 
 middle(s::Segment) = middle(s.left, s.right)
 
-linspace(s::Segment, n = 50) = linspace(s.left, s.right, n)
+linspace(s::Segment, n = 50) = range(s.left, stop=s.right, length=n)
 
 
 # intersections
@@ -489,8 +494,8 @@ RR_stability(::Affine) = RRStable()
 
 function rhs_string(t::Affine, term)
     @unpack α, β = t
-    α == 1 || (term = "$(signif(α, 4))⋅" * term)
-    β == 0 || (term = term * " + $(signif(β, 4))")
+    α == 1 || (term = "$(round(α, sigdigits=4))⋅" * term)
+    β == 0 || (term = term * " + $(round(β, sigdigits=4))")
     term
 end
 
@@ -1025,10 +1030,23 @@ end
 
 next_indexes(acc, t::UnivariateTransformation) = acc+1, acc+1
 
-@unroll function transformation_indexes(ts)
+
+# @unroll function transformation_indexes(ts)
+#     acc = 0
+#     result = ()
+#     @unroll for t in ts
+#         acc, ix = next_indexes(acc, t)
+#         result = (result..., ix)
+#     end
+#     result
+# end
+
+# Above version gave BoundsError
+
+function transformation_indexes(ts)
     acc = 0
     result = ()
-    @unroll for t in ts
+    for t in ts
         acc, ix = next_indexes(acc, t)
         result = (result..., ix)
     end
@@ -1215,7 +1233,7 @@ type and stucture, and `len` is the length of the result.
 function make_ungrouped_container(::Type{Vector},
                                   representative_elt::AbstractArray{T},
                                   len) where T
-    [Vector{T}(len) for _ in CartesianRange(indices(representative_elt))]
+    [Vector{T}(len) for _ in CartesianIndices(indices(representative_elt))]
 end
 
 function make_ungrouped_container(::Type{Array},
