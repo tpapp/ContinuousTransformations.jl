@@ -273,7 +273,7 @@ The real numbers above `left`. See [`ℝ⁺`](@ref).
     end
 end
 
-PositiveRay{T}(left::T) = PositiveRay{T}(left)
+PositiveRay(left::T) where {T} = PositiveRay{T}(left)
 
 in(x::Real, ray::PositiveRay) = ray.left ≤ x
 minimum(ray::PositiveRay) = ray.left
@@ -298,7 +298,7 @@ The real numbers below `right`. See [`ℝ⁻`](@ref).
     end
 end
 
-NegativeRay{T}(right::T) = NegativeRay{T}(right)
+NegativeRay(right::T) where {T} = NegativeRay{T}(right)
 
 in(x::Real, ray::NegativeRay) = x ≤ ray.right
 minimum(::NegativeRay{T}) where T = -T(Inf)
@@ -326,7 +326,7 @@ The real numbers between `left` and `right`, with
     end
 end
 
-Segment{T <: Real}(left::T, right::T) = Segment{T}(left, right)
+Segment(left::T, right::T) where {T <: Real} = Segment{T}(left, right)
 
 Segment(left::Real, right::Real) = Segment(promote(left, right)...)
 
